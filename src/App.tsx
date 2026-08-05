@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Hero } from './app/Hero'
 import { getTheme, toggleTheme, type Theme } from './design/theme'
 import { useLenisGsap } from './motion/useLenisGsap'
 import { ensureAudio, Tone } from './audio/engine'
@@ -73,11 +74,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-base text-ink">
+      <Hero />
+
       {/* Cabeçalho — assimétrico de propósito */}
       <header className="flex items-end justify-between border-b border-line px-6 pb-4 pt-8 md:px-12">
         <div>
-          <div className="type-label mb-2 text-ink-muted">fase 0 · fundação</div>
-          <h1 className="type-display text-4xl md:text-6xl">Compasso</h1>
+          <div className="type-label mb-2 text-ink-muted">sistema de design · fundação</div>
+          <h2 className="type-display text-4xl md:text-6xl">O sistema</h2>
         </div>
         <ThemeToggle theme={theme} onToggle={() => setThemeState(toggleTheme())} />
       </header>
