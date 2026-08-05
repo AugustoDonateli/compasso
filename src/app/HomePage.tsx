@@ -234,6 +234,12 @@ const PROGRAM: Array<{ n: string; title: string; desc: string; to?: string }> = 
     desc: 'reconhece nota, intervalo e acorde só de ouvir — 5 minutos por dia',
     to: '/ouvido',
   },
+  {
+    n: '05',
+    title: 'Afinador',
+    desc: 'o site ouve seu instrumento e diz se está afinado — nenhum vídeo faz isso',
+    to: '/afinador',
+  },
 ]
 
 function Program() {
