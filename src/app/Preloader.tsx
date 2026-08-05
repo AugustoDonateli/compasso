@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from '../motion/useLenisGsap'
+import { playClick } from '../audio/harmonics'
 
 /* Count-in de metrônomo: 1 · 2 · 3 · 4 — e a página entra no tempo.
    Uma vez por sessão; pulado por completo com prefers-reduced-motion. */
@@ -45,6 +46,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       tl.call(
         () => {
           if (beatRef.current) beatRef.current.textContent = String(beat)
+          playClick(beat === 1) // soa só se o áudio já estiver destravado
         },
         [],
         ((beat - 1) * BEAT_MS) / 1000,

@@ -1,7 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Hero } from './app/Hero'
 import { Preloader } from './app/Preloader'
 import { getTheme, toggleTheme, type Theme } from './design/theme'
+import { startFaviconMetronome } from './design/favicon'
+import { attachGlobalUnlock } from './audio/engine'
 import { useLenisGsap } from './motion/useLenisGsap'
 import { useLineReveal } from './motion/useLineReveal'
 import { ensureAudio, Tone } from './audio/engine'
@@ -227,6 +229,16 @@ function App() {
   useLenisGsap()
   const [theme, setThemeState] = useState<Theme>(getTheme)
   const [, setReady] = useState(false)
+
+  // primeiro gesto destrava o áudio; o favicon pulsa no andamento
+  useEffect(() => {
+    const detachUnlock = attachGlobalUnlock()
+    const stopFavicon = startFaviconMetronome()
+    return () => {
+      detachUnlock()
+      stopFavicon()
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-base text-ink">
