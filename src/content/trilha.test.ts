@@ -2,103 +2,152 @@ import { describe, expect, it } from 'vitest'
 import {
   licaoDesbloqueada,
   licaoPorId,
+  licoesDe,
   progressoPct,
   proximaLicao,
-  TODAS_LICOES,
-  UNIDADES,
+  TODAS_UNIDADES,
+  trilhaDe,
 } from './trilha'
+import type { InstrumentSoundId } from '../audio/instruments'
+
+const INSTRUMENTOS: InstrumentSoundId[] = ['guitarra', 'violao', 'baixo', 'piano', 'violino']
 
 describe('estrutura da trilha', () => {
-  it('ids de unidade e lição são únicos', () => {
-    const uIds = UNIDADES.map((u) => u.id)
+  it('ids de unidade, lição e pergunta são únicos no site inteiro', () => {
+    const uIds = TODAS_UNIDADES.map((u) => u.id)
     expect(new Set(uIds).size).toBe(uIds.length)
-    const lIds = TODAS_LICOES.map((x) => x.licao.id)
+    const lIds = TODAS_UNIDADES.flatMap((u) => u.licoes.map((l) => l.id))
     expect(new Set(lIds).size).toBe(lIds.length)
-  })
-
-  it('ids de pergunta são únicos no site inteiro', () => {
-    const qIds = UNIDADES.flatMap((u) => u.licoes.flatMap((l) => l.perguntas.map((p) => p.id)))
+    const qIds = TODAS_UNIDADES.flatMap((u) => u.licoes.flatMap((l) => l.perguntas.map((p) => p.id)))
     expect(new Set(qIds).size).toBe(qIds.length)
   })
 
-  it('unidades numeradas em sequência e com guia', () => {
-    UNIDADES.forEach((u, i) => {
-      expect(u.n).toBe(i + 1)
-      expect(u.guia.length).toBeGreaterThan(40)
-    })
-  })
-
   it('toda lição tem pelo menos duas perguntas', () => {
-    for (const { licao } of TODAS_LICOES) {
-      expect(licao.perguntas.length).toBeGreaterThanOrEqual(2)
+    for (const u of TODAS_UNIDADES) {
+      for (const l of u.licoes) expect(l.perguntas.length).toBeGreaterThanOrEqual(2)
     }
   })
 
   it('TODA pergunta explica a resposta — o erro sempre vira aula', () => {
-    for (const { licao } of TODAS_LICOES) {
-      for (const p of licao.perguntas) {
-        expect(p.explica.length).toBeGreaterThan(30)
+    for (const u of TODAS_UNIDADES) {
+      for (const l of u.licoes) {
+        for (const p of l.perguntas) expect(p.explica.length).toBeGreaterThan(60)
       }
     }
   })
 
-  it('perguntas de alternativa têm índice de resposta válido', () => {
-    for (const { licao } of TODAS_LICOES) {
-      for (const p of licao.perguntas) {
-        if (p.tipo === 'escolha' || p.tipo === 'ouvir') {
-          expect(p.alternativas.length).toBeGreaterThanOrEqual(2)
-          expect(p.correta).toBeGreaterThanOrEqual(0)
-          expect(p.correta).toBeLessThan(p.alternativas.length)
+  it('alternativas: pelo menos 2, no máximo 4, com índice válido', () => {
+    for (const u of TODAS_UNIDADES) {
+      for (const l of u.licoes) {
+        for (const p of l.perguntas) {
+          if (p.tipo === 'escolha' || p.tipo === 'ouvir') {
+            expect(p.alternativas.length).toBeGreaterThanOrEqual(2)
+            // "três boas valem mais que quatro com enchimento"
+            expect(p.alternativas.length).toBeLessThanOrEqual(4)
+            expect(p.correta).toBeGreaterThanOrEqual(0)
+            expect(p.correta).toBeLessThan(p.alternativas.length)
+          }
         }
       }
     }
   })
 
-  it('perguntas de montar têm alvo válido (classes de altura 0..11)', () => {
-    for (const { licao } of TODAS_LICOES) {
-      for (const p of licao.perguntas) {
-        if (p.tipo === 'montar') {
-          expect(p.alvo.length).toBeGreaterThan(0)
-          for (const pc of p.alvo) expect(pc).toBeGreaterThanOrEqual(0)
-          for (const pc of p.alvo) expect(pc).toBeLessThanOrEqual(11)
+  it('nenhuma alternativa se repete dentro da mesma pergunta', () => {
+    for (const u of TODAS_UNIDADES) {
+      for (const l of u.licoes) {
+        for (const p of l.perguntas) {
+          if (p.tipo === 'escolha' || p.tipo === 'ouvir') {
+            expect(new Set(p.alternativas).size).toBe(p.alternativas.length)
+          }
+        }
+      }
+    }
+  })
+
+  it('a resposta certa não é sempre a primeira (evita chutar por padrão)', () => {
+    const indices = TODAS_UNIDADES.flatMap((u) =>
+      u.licoes.flatMap((l) =>
+        l.perguntas
+          .filter((p) => p.tipo === 'escolha' || p.tipo === 'ouvir')
+          .map((p) => (p as { correta: number }).correta),
+      ),
+    )
+    expect(new Set(indices).size).toBeGreaterThan(1)
+  })
+
+  it('perguntas de montar têm alvo válido', () => {
+    for (const u of TODAS_UNIDADES) {
+      for (const l of u.licoes) {
+        for (const p of l.perguntas) {
+          if (p.tipo === 'montar') {
+            expect(p.alvo.length).toBeGreaterThan(0)
+            for (const pc of p.alvo) {
+              expect(pc).toBeGreaterThanOrEqual(0)
+              expect(pc).toBeLessThanOrEqual(11)
+            }
+          }
         }
       }
     }
   })
 })
 
+describe('galhos por instrumento', () => {
+  it('quem toca corda vê as unidades do instrumento', () => {
+    const ids = trilhaDe('guitarra').map((u) => u.id)
+    expect(ids).toContain('seu-instrumento-cordas')
+    expect(ids).toContain('primeiros-acordes')
+    expect(trilhaDe('violao').map((u) => u.id)).toContain('seu-instrumento-cordas')
+  })
+
+  it('quem não toca corda não vê as unidades de corda, mas vê a teoria', () => {
+    const ids = trilhaDe('piano').map((u) => u.id)
+    expect(ids).not.toContain('seu-instrumento-cordas')
+    expect(ids).toContain('som-tem-nome')
+    expect(ids).toContain('o-pulso')
+  })
+
+  it('todo instrumento tem pelo menos uma trilha navegável', () => {
+    for (const i of INSTRUMENTOS) {
+      expect(licoesDe(i).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('a unidade do instrumento vem antes da teoria pra quem toca corda', () => {
+    const primeira = trilhaDe('guitarra')[0]
+    expect(primeira.id).toBe('seu-instrumento-cordas')
+  })
+})
+
 describe('progressão', () => {
-  const ids = TODAS_LICOES.map((x) => x.licao.id)
+  const ids = licoesDe('guitarra').map((x) => x.licao.id)
 
   it('próxima lição é a primeira não concluída', () => {
-    expect(proximaLicao([])?.licao.id).toBe(ids[0])
-    expect(proximaLicao([ids[0]])?.licao.id).toBe(ids[1])
+    expect(proximaLicao([], 'guitarra')?.licao.id).toBe(ids[0])
+    expect(proximaLicao([ids[0]], 'guitarra')?.licao.id).toBe(ids[1])
     // buraco no meio: volta o que falta, não o seguinte ao último feito
-    expect(proximaLicao([ids[0], ids[2]])?.licao.id).toBe(ids[1])
+    expect(proximaLicao([ids[0], ids[2]], 'guitarra')?.licao.id).toBe(ids[1])
   })
 
   it('trilha inteira concluída não tem próxima', () => {
-    expect(proximaLicao(ids)).toBeNull()
+    expect(proximaLicao(ids, 'guitarra')).toBeNull()
   })
 
-  it('a primeira lição já nasce desbloqueada', () => {
-    expect(licaoDesbloqueada(ids[0], [])).toBe(true)
+  it('primeira lição já nasce aberta; a seguinte só depois dela', () => {
+    expect(licaoDesbloqueada(ids[0], [], 'guitarra')).toBe(true)
+    expect(licaoDesbloqueada(ids[1], [], 'guitarra')).toBe(false)
+    expect(licaoDesbloqueada(ids[1], [ids[0]], 'guitarra')).toBe(true)
   })
 
-  it('lição só desbloqueia depois da anterior', () => {
-    expect(licaoDesbloqueada(ids[1], [])).toBe(false)
-    expect(licaoDesbloqueada(ids[1], [ids[0]])).toBe(true)
-  })
-
-  it('percentual de progresso', () => {
-    expect(progressoPct([])).toBe(0)
-    expect(progressoPct(ids)).toBe(100)
-    expect(progressoPct(['inexistente'])).toBe(0)
+  it('percentual conta só as lições do instrumento escolhido', () => {
+    expect(progressoPct([], 'guitarra')).toBe(0)
+    expect(progressoPct(ids, 'guitarra')).toBe(100)
+    // lições de corda não contam pro pianista
+    expect(progressoPct(['seis-cordas'], 'piano')).toBe(0)
   })
 
   it('busca por id devolve a unidade junto', () => {
-    const found = licaoPorId(ids[0])
-    expect(found?.unidade.n).toBe(1)
-    expect(licaoPorId('nada')).toBeUndefined()
+    expect(licaoPorId(ids[0], 'guitarra')?.unidade.n).toBe(0)
+    expect(licaoPorId('nada', 'guitarra')).toBeUndefined()
   })
 })

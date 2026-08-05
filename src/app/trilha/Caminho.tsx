@@ -1,36 +1,38 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from '../../motion/useLenisGsap'
-import { TODAS_LICOES, UNIDADES, licaoDesbloqueada } from '../../content/trilha'
+import { licaoDesbloqueada, licoesDe, type Unidade } from '../../content/trilha'
+import type { InstrumentSoundId } from '../../audio/instruments'
 
 /* O caminho é um BRAÇO VISTO DE CIMA, descendo a tela.
-   Cada lição é um marcador de casa (aquelas bolinhas em 3, 5, 7, 9) e o fim
-   de cada unidade é a MARCA DUPLA da 12ª casa. Subir o braço = evoluir.
+   Cada lição é um marcador de casa; o fim de unidade é a MARCA DUPLA da 12ª.
 
-   O espaçamento das casas usa a fórmula real — L × (1 − 2^(−n/12)) —
-   então as casas apertam conforme descem, igual num instrumento de verdade.
-   Isso é o oposto de um caminho genérico de bolinhas. */
+   O espaçamento usa a fórmula real — L × (1 − 2^(−n/12)) — então as casas
+   apertam conforme descem, igual num instrumento de verdade.
 
-const W = 320
-const NECK_X = 60
-const NECK_W = 200
-const TOP = 40
-const SCALE_LEN = 1400 // "comprimento de escala" virtual em px
+   Tudo aqui é grande de propósito: marcadores, títulos e áreas de toque.
+   A tela precisa passar confiança, e coisa pequena passa o contrário. */
 
-/** distância do capotraste até a casa n, na proporção verdadeira */
+const W = 460
+const NECK_X = 34
+const NECK_W = 150
+const TOP = 44
+const SCALE_LEN = 2600
+
 function fretY(n: number): number {
   return TOP + SCALE_LEN * (1 - Math.pow(2, -n / 12))
 }
 
 interface Props {
+  instrumento: InstrumentSoundId
   concluidas: string[]
   atualId: string | null
   onEscolher: (licaoId: string) => void
+  onVerGuia: (u: Unidade) => void
 }
 
-export function Caminho({ concluidas, atualId, onEscolher }: Props) {
+export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGuia }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null)
 
-  // as casas entram de cima pra baixo quando a trilha aparece
   useEffect(() => {
     const el = svgRef.current
     if (!el) return
@@ -38,136 +40,127 @@ export function Caminho({ concluidas, atualId, onEscolher }: Props) {
     const marks = el.querySelectorAll('[data-mark]')
     const tween = gsap.from(marks, {
       opacity: 0,
-      y: -14,
-      duration: reduced ? 0.2 : 0.5,
-      stagger: reduced ? 0 : 0.06,
+      y: -16,
+      duration: reduced ? 0.2 : 0.55,
+      stagger: reduced ? 0 : 0.07,
       ease: 'power2.out',
     })
     return () => {
       tween.kill()
     }
-  }, [])
+  }, [instrumento])
 
-  // cada lição ocupa uma casa; a última casa de cada unidade é a "12ª" (marca dupla)
-  let casa = 0
-  const nodes = TODAS_LICOES.map(({ unidade, licao }, i) => {
-    casa += 1
-    const ultimaDaUnidade = unidade.licoes[unidade.licoes.length - 1].id === licao.id
-    const feita = concluidas.includes(licao.id)
-    const aberta = licaoDesbloqueada(licao.id, concluidas)
-    const atual = licao.id === atualId
-    return { unidade, licao, i, casa, ultimaDaUnidade, feita, aberta, atual }
-  })
+  const lista = licoesDe(instrumento)
+  const nodes = lista.map(({ unidade, licao }, i) => ({
+    unidade,
+    licao,
+    i,
+    casa: i + 1,
+    fimDeUnidade: unidade.licoes[unidade.licoes.length - 1].id === licao.id,
+    inicioDeUnidade: unidade.licoes[0].id === licao.id,
+    feita: concluidas.includes(licao.id),
+    aberta: licaoDesbloqueada(licao.id, concluidas, instrumento),
+    atual: licao.id === atualId,
+  }))
 
-  const altura = fretY(nodes.length + 1) + 90
+  const altura = fretY(nodes.length + 1) + 40
 
   return (
     <svg
       ref={svgRef}
       viewBox={`0 0 ${W} ${altura}`}
-      className="block w-full max-w-md"
+      className="block w-full"
       style={{ touchAction: 'manipulation' }}
       role="list"
       aria-label="Trilha do Compasso"
     >
       <defs>
         <linearGradient id="madeira" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#1a1512" />
-          <stop offset="45%" stopColor="#2a221c" />
-          <stop offset="100%" stopColor="#171310" />
+          <stop offset="0%" stopColor="#191410" />
+          <stop offset="45%" stopColor="#2c231c" />
+          <stop offset="100%" stopColor="#15110e" />
         </linearGradient>
       </defs>
 
-      {/* o braço */}
-      <rect x={NECK_X} y={TOP} width={NECK_W} height={altura - TOP - 20} fill="url(#madeira)" />
+      <rect x={NECK_X} y={TOP} width={NECK_W} height={altura - TOP - 16} fill="url(#madeira)" />
       {/* capotraste */}
-      <rect x={NECK_X - 4} y={TOP - 7} width={NECK_W + 8} height={7} fill="#d8cfc0" rx={1} />
+      <rect x={NECK_X - 5} y={TOP - 9} width={NECK_W + 10} height={9} fill="#d8cfc0" rx={1.5} />
 
-      {/* as seis cordas descendo */}
+      {/* cordas */}
       {Array.from({ length: 6 }, (_, s) => {
-        const x = NECK_X + 18 + (s * (NECK_W - 36)) / 5
+        const x = NECK_X + 14 + (s * (NECK_W - 28)) / 5
         return (
           <line
             key={s}
             x1={x}
-            y1={TOP - 7}
+            y1={TOP - 9}
             x2={x}
-            y2={altura - 20}
+            y2={altura - 16}
             stroke="#6e655c"
-            strokeWidth={0.6 + s * 0.22}
-            opacity={0.5}
+            strokeWidth={0.7 + s * 0.24}
+            opacity={0.45}
           />
         )
       })}
 
-      {/* trastes: um por lição, no espaçamento real */}
-      {nodes.map(({ casa: c }) => (
+      {/* trastes */}
+      {nodes.map(({ casa }) => (
         <line
-          key={`t${c}`}
+          key={`t${casa}`}
           x1={NECK_X}
           x2={NECK_X + NECK_W}
-          y1={fretY(c)}
-          y2={fretY(c)}
+          y1={fretY(casa)}
+          y2={fretY(casa)}
           stroke="#8a8075"
-          strokeWidth={2}
+          strokeWidth={2.5}
         />
       ))}
 
-      {/* as lições */}
       {nodes.map((n) => {
         const yTopo = fretY(n.casa - 1)
-        const y = (yTopo + fretY(n.casa)) / 2 // centro da casa, como um marcador real
+        const yBase = fretY(n.casa)
+        const y = (yTopo + yBase) / 2
         const cx = NECK_X + NECK_W / 2
-        const cor = n.feita ? '#e0a34a' : n.atual ? '#f2ede6' : '#4a423a'
+        const cor = n.feita ? '#e0a34a' : n.atual ? '#f2ede6' : '#463d34'
 
         return (
-          <g
-            key={n.licao.id}
-            data-mark
-            role="listitem"
-            aria-label={`${n.licao.titulo}${n.feita ? ' (concluída)' : n.aberta ? '' : ' (bloqueada)'}`}
-            style={{ cursor: n.aberta ? 'pointer' : 'not-allowed' }}
-            onPointerDown={() => n.aberta && onEscolher(n.licao.id)}
-          >
-            {/* área de toque generosa (mobile) */}
+          <g key={n.licao.id} data-mark role="listitem">
+            {/* alvo de toque: a casa inteira */}
             <rect
               x={NECK_X}
               y={yTopo}
-              width={NECK_W}
-              height={fretY(n.casa) - yTopo}
+              width={W - NECK_X}
+              height={yBase - yTopo}
               fill="transparent"
+              style={{ cursor: n.aberta ? 'pointer' : 'not-allowed' }}
+              onPointerDown={() => {
+                if (!n.aberta) return
+                onVerGuia(n.unidade)
+                onEscolher(n.licao.id)
+              }}
+              aria-label={`${n.licao.titulo}${n.feita ? ', concluída' : n.aberta ? '' : ', travada'}`}
             />
 
-            {/* marcador: duplo no fim da unidade, como a 12ª casa */}
-            {n.ultimaDaUnidade ? (
+            {/* marcador duplo no fim da unidade, como a 12ª casa */}
+            {n.fimDeUnidade ? (
               <>
-                <circle cx={cx - 26} cy={y} r={11} fill={cor} opacity={n.aberta ? 1 : 0.45} />
-                <circle cx={cx + 26} cy={y} r={11} fill={cor} opacity={n.aberta ? 1 : 0.45} />
+                <circle cx={cx - 30} cy={y} r={13} fill={cor} opacity={n.aberta ? 1 : 0.4} />
+                <circle cx={cx + 30} cy={y} r={13} fill={cor} opacity={n.aberta ? 1 : 0.4} />
               </>
             ) : (
-              <circle cx={cx} cy={y} r={13} fill={cor} opacity={n.aberta ? 1 : 0.45} />
+              <circle cx={cx} cy={y} r={17} fill={cor} opacity={n.aberta ? 1 : 0.4} />
             )}
 
-            {/* anel de "você está aqui" */}
             {n.atual && (
-              <circle
-                cx={cx}
-                cy={y}
-                r={22}
-                fill="none"
-                stroke="#e0a34a"
-                strokeWidth={1.6}
-                opacity={0.9}
-              />
+              <circle cx={cx} cy={y} r={28} fill="none" stroke="#e0a34a" strokeWidth={2} />
             )}
 
-            {/* número da lição dentro do marcador */}
-            {!n.ultimaDaUnidade && (
+            {!n.fimDeUnidade && (
               <text
                 x={cx}
-                y={y + 4}
+                y={y + 6}
                 textAnchor="middle"
-                fontSize={12}
+                fontSize={16}
                 fontFamily="Space Mono, monospace"
                 fontWeight={700}
                 fill={n.feita || n.atual ? '#12100e' : '#8a8075'}
@@ -177,57 +170,33 @@ export function Caminho({ concluidas, atualId, onEscolher }: Props) {
               </text>
             )}
 
-            {/* título ao lado do braço */}
+            {/* título grande ao lado */}
             <text
-              x={NECK_X + NECK_W + 12}
-              y={y - 2}
-              fontSize={12}
-              fontFamily="Space Grotesk Variable, sans-serif"
-              fill={n.aberta ? '#f2ede6' : '#6e655c'}
+              x={NECK_X + NECK_W + 22}
+              y={y + (n.inicioDeUnidade ? 2 : 6)}
+              fontSize={19}
+              fontFamily="Fraunces Variable, serif"
+              fontWeight={560}
+              fill={n.aberta ? '#f2ede6' : '#5a5148'}
               pointerEvents="none"
             >
               {n.licao.titulo}
             </text>
-            <text
-              x={NECK_X + NECK_W + 12}
-              y={y + 12}
-              fontSize={9}
-              fontFamily="Space Mono, monospace"
-              fill="#6e655c"
-              pointerEvents="none"
-            >
-              {n.feita ? 'concluída' : n.atual ? 'você está aqui' : n.aberta ? 'aberta' : 'travada'}
-            </text>
-
-            {/* rótulo da unidade à esquerda, na primeira lição dela */}
-            {n.unidade.licoes[0].id === n.licao.id && (
+            {n.inicioDeUnidade && (
               <text
-                x={NECK_X - 10}
-                y={y + 4}
-                textAnchor="end"
-                fontSize={10}
+                x={NECK_X + NECK_W + 22}
+                y={y + 20}
+                fontSize={11}
                 fontFamily="Space Mono, monospace"
-                fill="#a69c90"
+                fill="#6e655c"
                 pointerEvents="none"
               >
-                U{n.unidade.n}
+                unidade {n.unidade.n} · {n.unidade.titulo}
               </text>
             )}
           </g>
         )
       })}
-
-      {/* quantas unidades existem, no pé do braço */}
-      <text
-        x={NECK_X + NECK_W / 2}
-        y={altura - 4}
-        textAnchor="middle"
-        fontSize={9}
-        fontFamily="Space Mono, monospace"
-        fill="#4a423a"
-      >
-        {UNIDADES.length} unidades · mais vindo
-      </text>
     </svg>
   )
 }

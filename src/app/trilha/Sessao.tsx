@@ -251,13 +251,20 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
             </>
           )}
 
-          {/* ACHAR: braço do instrumento */}
+          {/* ACHAR: braço do instrumento. Quando a pergunta pede uma posição
+              exata (ex.: "a 5ª corda solta"), cobra corda e casa; senão aceita
+              a nota em qualquer lugar — porque ela mora em vários. */}
           {p.tipo === 'achar' && (
             <Fretboard
               tuning={TUNINGS[som === 'baixo' ? 'baixo' : som === 'violao' ? 'violao' : 'guitarra']}
-              onPlay={(_s, _f, midi) => {
+              onPlay={(corda, casa, midi) => {
                 void playMidi(som, midi)
-                if (estado === 'respondendo') registrar(midiToPc(midi) === p.alvo)
+                if (estado !== 'respondendo') return
+                registrar(
+                  p.posicao
+                    ? corda === p.posicao.corda && casa === p.posicao.casa
+                    : midiToPc(midi) === p.alvo,
+                )
               }}
               roleOf={estado !== 'respondendo' ? (pc) => (pc === p.alvo ? 'tonica' : 'fora') : undefined}
             />
