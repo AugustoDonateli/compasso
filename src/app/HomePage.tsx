@@ -213,8 +213,8 @@ function FieldMeasure() {
 const PROGRAM: Array<{ n: string; title: string; desc: string; to?: string }> = [
   {
     n: '01',
-    title: 'O braço',
-    desc: 'a guitarra e o baixo na tela: toca a casa, ouve a nota, vê a escala acender',
+    title: 'Mapa das notas',
+    desc: 'onde cada nota mora na guitarra e no baixo — toca e ouve de verdade',
     to: '/braco',
   },
   {

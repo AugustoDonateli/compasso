@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useScrollDriver } from '../motion/useScrollDriver'
 import { useFrameSequence } from '../motion/useFrameSequence'
-import { gsap } from '../motion/useLenisGsap'
 import { isAudioUnlocked, onAudioUnlock } from '../audio/engine'
 import { playFretHarmonic } from '../audio/harmonics'
 import { useWaveformCanvas } from '../audio/useAnalyser'
@@ -51,7 +50,6 @@ export function Hero() {
   const titleRef = useRef<HTMLDivElement | null>(null)
   const metaRef = useRef<HTMLDivElement | null>(null)
   const hintRef = useRef<HTMLDivElement | null>(null)
-  const glowRef = useRef<HTMLDivElement | null>(null)
   const beatRefs = useRef<(HTMLDivElement | null)[]>([])
   const lastFretRef = useRef(-1)
   const [soundOn, setSoundOn] = useState(isAudioUnlocked)
@@ -78,18 +76,12 @@ export function Hero() {
     (p: number) => {
       draw(p)
 
-      // glissando: um harmônico por traste cruzado (nos dois sentidos)
+      // glissando: um harmônico por traste cruzado (nos dois sentidos).
+      // Só som — nada de clarão na tela: em rolagem rápida virava estroboscópio.
       const fret = Math.min(FRETS_IN_JOURNEY, Math.floor(p * (FRETS_IN_JOURNEY + 1)))
       if (fret !== lastFretRef.current) {
         if (lastFretRef.current !== -1 && p > 0.015) {
           playFretHarmonic(fret)
-          if (glowRef.current) {
-            gsap.fromTo(
-              glowRef.current,
-              { opacity: 0.28 },
-              { opacity: 0, duration: 1.1, ease: 'power2.out', overwrite: true },
-            )
-          }
         }
         lastFretRef.current = fret
       }
@@ -140,16 +132,6 @@ export function Hero() {
     <section ref={sectionRef} className="relative h-screen overflow-hidden bg-[#12100e]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
-      {/* modo palco: glow que respira a cada harmônico */}
-      <div
-        ref={glowRef}
-        className="pointer-events-none absolute inset-0 opacity-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 55% at 50% 45%, rgba(224,163,74,0.35), transparent 70%)',
-        }}
-      />
-
       {/* luz onde o texto assenta */}
       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#12100e]/85 via-[#12100e]/25 to-transparent" />
 
@@ -159,9 +141,9 @@ export function Hero() {
         <span className="type-label text-[#a69c90]">abertura · grave</span>
       </div>
 
-      {/* andamento pulsando em ♩=40 */}
+      {/* andamento — estático; o pulso vive no som, não na tela */}
       <div className="absolute right-5 top-6 hidden items-center gap-2 md:flex md:right-10">
-        <span className="pulse-40 block h-3 w-0.5 bg-[#e0a34a]" />
+        <span className="block h-3 w-0.5 bg-[#e0a34a]" />
         <span className="type-label text-[#6e655c]">♩ = 40</span>
       </div>
 
@@ -219,7 +201,7 @@ export function Hero() {
 
       <div ref={hintRef} className="absolute bottom-8 right-5 flex items-center gap-3 md:right-10">
         <span className="type-label text-[#a69c90]">rolar</span>
-        <span className="pulse-40 block h-8 w-px bg-[#e0a34a]" />
+        <span className="block h-8 w-px bg-[#e0a34a]" />
       </div>
     </section>
   )

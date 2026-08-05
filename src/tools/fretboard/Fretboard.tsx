@@ -16,8 +16,10 @@ export interface FretboardProps {
   roleOf?: (pc: PitchClass, midi: number) => NoteRole | null
   /** toque numa casa: (corda, casa, midi). O pai decide o que soa. */
   onPlay?: (stringIndex: number, fret: number, midi: number) => void
-  /** mostra o nome em todas as casas (modo explorar) ou só nas destacadas */
-  labelAll?: boolean
+  /** quanto texto mostrar. 'none' deixa o braço limpo — descobre-se tocando. */
+  labelMode?: 'none' | 'naturals' | 'all'
+  /** última casa tocada, destacada com anel (feedback do gesto) */
+  tapped?: { string: number; fret: number } | null
 }
 
 // dimensões do desenho (viewBox — escala em qualquer tela)
@@ -34,7 +36,16 @@ const ROLE_FILL: Record<NoteRole, { fill: string; opacity: number; text: string 
   fora: { fill: 'transparent', opacity: 0, text: '#6e655c' },
 }
 
-export function Fretboard({ tuning, roleOf, onPlay, labelAll = false }: FretboardProps) {
+/** notas naturais (sem sustenido/bemol) — o que se aprende primeiro */
+const NATURAL_PCS = new Set([0, 2, 4, 5, 7, 9, 11])
+
+export function Fretboard({
+  tuning,
+  roleOf,
+  onPlay,
+  labelMode = 'none',
+  tapped = null,
+}: FretboardProps) {
   const stringCount = tuning.openStrings.length
   const H = STRING_PAD * 2 + (stringCount - 1) * 34
   const frets = tuning.frets
@@ -165,6 +176,9 @@ export function Fretboard({ tuning, roleOf, onPlay, labelAll = false }: Fretboar
               fret === 0 ? NUT_X - 14 : BOARD_X + cellCenterX(fret, frets) * BOARD_W
             const show = role !== null && role !== 'fora'
             const style = role ? ROLE_FILL[role] : null
+            const isTapped = tapped?.string === i && tapped?.fret === fret
+            const labelled =
+              labelMode === 'all' || (labelMode === 'naturals' && NATURAL_PCS.has(pc))
 
             return (
               <g key={`${i}-${fret}`}>
@@ -184,18 +198,44 @@ export function Fretboard({ tuning, roleOf, onPlay, labelAll = false }: Fretboar
                     </text>
                   </>
                 )}
-                {labelAll && !show && fret > 0 && (
+                {labelled && !show && (
                   <text
                     x={cx}
                     y={y + 3.2}
                     textAnchor="middle"
                     fontSize={8}
                     fontFamily="Space Mono, monospace"
-                    fill="#6e655c"
-                    opacity={0.55}
+                    fill="#a69c90"
+                    opacity={0.5}
                   >
                     {noteId(spellPc(pc))}
                   </text>
+                )}
+                {/* o que você acabou de tocar: anel + nome, sempre visível */}
+                {isTapped && (
+                  <>
+                    <circle
+                      cx={cx}
+                      cy={y}
+                      r={12}
+                      fill="none"
+                      stroke="#f2ede6"
+                      strokeWidth={1.6}
+                    />
+                    {!show && (
+                      <text
+                        x={cx}
+                        y={y + 3.4}
+                        textAnchor="middle"
+                        fontSize={9.5}
+                        fontFamily="Space Mono, monospace"
+                        fontWeight={700}
+                        fill="#f2ede6"
+                      >
+                        {noteId(spellPc(pc))}
+                      </text>
+                    )}
+                  </>
                 )}
                 {/* zona de toque generosa (44px mínimo garantido pelo viewBox) */}
                 <rect

@@ -1,23 +1,40 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
 import { useAcheANota } from '../../tools/fretboard/AcheANota'
-import { TUNINGS, type InstrumentId } from '../../theory/fretboard'
+import { TUNINGS, midiAt, positionsOf, type InstrumentId } from '../../theory/fretboard'
 import { SCALES, scalePcs, type ScaleId } from '../../theory/scales'
 import { chordPcs, type ChordQuality, CHORDS, type NoteRole } from '../../theory/chords'
-import { spellPc, noteSolfejo, type PitchClass } from '../../theory/notes'
+import { midiToPc, noteId, noteSolfejo, spellPc, type PitchClass } from '../../theory/notes'
 import { playMidi, preloadInstrument } from '../../audio/instruments'
 
-/* ┃ferramenta 01┃ O braço.
-   Página-molde das ferramentas: ambientação escura de hardware,
-   controles com cara de equipamento, o instrumento no centro. */
+/* ┃ferramenta 01┃ Mapa das notas.
+   Regra desta página: NADA de parede de informação. O braço começa limpo,
+   você descobre tocando, e cada modo se explica em uma linha de português. */
 
-type Mode = 'explorar' | 'escala' | 'acorde' | 'jogo'
+type Mode = 'descobrir' | 'escala' | 'acorde' | 'jogo'
+
+const MODE_LABEL: Record<Mode, string> = {
+  descobrir: 'descobrir',
+  escala: 'ver uma escala',
+  acorde: 'ver um acorde',
+  jogo: 'jogo: ache a nota',
+}
+
+const MODE_HELP: Record<Mode, string> = {
+  descobrir:
+    'Toca em qualquer lugar do braço: você ouve a nota de verdade e o nome dela aparece. É assim que se decora o braço — tocando, não estudando tabela.',
+  escala:
+    'Escala é um conjunto de notas que combinam entre si. Escolhe uma nota-base e veja onde ela mora no braço: aceso forte é a nota-base, aceso fraco são as outras notas da escala.',
+  acorde:
+    'Acorde é um punhado de notas tocadas juntas. Aqui você vê onde estão as notas que formam esse acorde — todas as posições possíveis, não só o desenho decorado.',
+  jogo: 'Ache a nota pedida em qualquer corda. Acertou fica verde, errou fica vermelho — e você ganha XP.',
+}
 
 const TONICS: PitchClass[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const CHORD_CHOICES: ChordQuality[] = ['maior', 'menor', 'dominante7', 'maior7', 'menor7']
 
-function ControlButton({
+function Chip({
   active,
   onClick,
   children,
@@ -42,19 +59,26 @@ function ControlButton({
 
 export function BracoPage() {
   const [instrument, setInstrument] = useState<InstrumentId>('guitarra')
-  const [mode, setMode] = useState<Mode>('explorar')
-  const [tonic, setTonic] = useState<PitchClass>(0)
+  const [mode, setMode] = useState<Mode>('descobrir')
+  const [tonic, setTonic] = useState<PitchClass>(9) // Lá: a pentatônica de Lá é a 1ª que todo mundo aprende
   const [scaleId, setScaleId] = useState<ScaleId>('pentatonica-menor')
   const [chordQ, setChordQ] = useState<ChordQuality>('maior')
-  const [lastNote, setLastNote] = useState<string | null>(null)
+  const [showAllNames, setShowAllNames] = useState(false)
+  const [tapped, setTapped] = useState<{ string: number; fret: number } | null>(null)
+  const [readout, setReadout] = useState<string | null>(null)
 
+  const soundId = instrument === 'violao' ? 'guitarra' : instrument
   const tuning = TUNINGS[instrument]
   const game = useAcheANota(mode === 'jogo')
 
   useEffect(() => {
-    preloadInstrument(instrument === 'violao' ? 'guitarra' : instrument)
-    window.scrollTo(0, 0)
-  }, [instrument])
+    preloadInstrument(soundId)
+  }, [soundId])
+
+  useEffect(() => {
+    setTapped(null)
+    setReadout(null)
+  }, [mode, instrument])
 
   const roleOf = useMemo(() => {
     if (mode === 'escala') {
@@ -70,98 +94,135 @@ export function BracoPage() {
     return undefined
   }, [mode, tonic, scaleId, chordQ])
 
-  const onPlay = (_s: number, _f: number, midi: number) => {
-    void playMidi(instrument === 'violao' ? 'guitarra' : instrument, midi)
-    setLastNote(noteSolfejo(spellPc((((midi % 12) + 12) % 12) as PitchClass)))
+  const onPlay = (stringIndex: number, fret: number, midi: number) => {
+    void playMidi(soundId, midi)
+    setTapped({ string: stringIndex, fret })
+    const pc = midiToPc(midi)
+    const spelled = spellPc(pc)
+    setReadout(`${noteSolfejo(spelled)} · ${noteId(spelled)}`)
     if (mode === 'jogo') game.answer(midi)
   }
 
+  /** Ouvir a escala/acorde: é o que faz o conceito "clicar" pra quem começa */
+  const listen = useCallback(() => {
+    const pcs = mode === 'escala' ? scalePcs(tonic, scaleId) : chordPcs(tonic, chordQ)
+    // sobe a partir da posição mais grave possível de cada nota
+    const midis = pcs.map((pc, i) => {
+      const pos = positionsOf(tuning, pc, 12)[0]
+      const base = pos ? midiAt(tuning, pos.string, pos.fret) : 60
+      return base + (i === 0 ? 0 : 0)
+    })
+    midis.sort((a, b) => a - b)
+    midis.forEach((m, i) => {
+      setTimeout(() => void playMidi(soundId, m, 1.1), i * (mode === 'escala' ? 260 : 60))
+    })
+  }, [mode, tonic, scaleId, chordQ, tuning, soundId])
+
+  const contextual = mode === 'escala' || mode === 'acorde'
+
   return (
     <div className="min-h-screen bg-[#171310] text-[#f2ede6]">
-      {/* cabeçalho da ferramenta */}
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
-        <Link
-          to="/"
-          className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]"
-        >
+        <Link to="/" className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]">
           ← compasso
         </Link>
         <span className="type-label text-[#6e655c]">ferramenta 01</span>
       </header>
 
       <main className="px-5 pb-24 md:px-10">
-        <div className="mb-10 max-w-2xl md:mb-14">
-          <h1 className="type-display text-5xl md:text-7xl">O braço</h1>
-          <p className="mt-4 max-w-xl text-lg text-[#a69c90]">
-            {mode === 'jogo' ? (
-              <>
-                Ache <span className="text-[#e0a34a]">{game.challenge.label}</span> em qualquer
-                corda.
-              </>
-            ) : (
-              <>Toca qualquer casa — soa a nota de verdade, gravada de uma guitarra de verdade.</>
-            )}
+        <div className="mb-8 max-w-2xl">
+          <h1 className="type-display text-5xl md:text-7xl">Mapa das notas</h1>
+          <p className="mt-4 text-lg text-[#a69c90]">
+            Onde cada nota mora na guitarra e no baixo — e como elas soam de verdade.
           </p>
         </div>
 
-        {/* painel de controles, cara de equipamento */}
-        <div className="mb-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-y border-[#332d27] py-4">
+        {/* instrumento + modo */}
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-[#332d27] pt-5">
           <div className="flex items-center gap-2">
             <span className="type-label mr-1 text-[#6e655c]">instrumento</span>
-            <ControlButton active={instrument === 'guitarra'} onClick={() => setInstrument('guitarra')}>
+            <Chip active={instrument === 'guitarra'} onClick={() => setInstrument('guitarra')}>
               guitarra
-            </ControlButton>
-            <ControlButton active={instrument === 'baixo'} onClick={() => setInstrument('baixo')}>
+            </Chip>
+            <Chip active={instrument === 'baixo'} onClick={() => setInstrument('baixo')}>
               baixo
-            </ControlButton>
+            </Chip>
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="type-label mr-1 text-[#6e655c]">modo</span>
-            {(['explorar', 'escala', 'acorde', 'jogo'] as Mode[]).map((m) => (
-              <ControlButton key={m} active={mode === m} onClick={() => setMode(m)}>
-                {m === 'jogo' ? 'ache a nota' : m}
-              </ControlButton>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="type-label mr-1 text-[#6e655c]">o que fazer</span>
+            {(Object.keys(MODE_LABEL) as Mode[]).map((m) => (
+              <Chip key={m} active={mode === m} onClick={() => setMode(m)}>
+                {MODE_LABEL[m]}
+              </Chip>
             ))}
           </div>
         </div>
 
-        {/* controles contextuais */}
-        {(mode === 'escala' || mode === 'acorde') && (
-          <div className="mb-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+        {/* a linha que explica — sempre presente */}
+        <p className="mt-5 max-w-3xl border-l-2 border-[#e0a34a] pl-4 text-[#a69c90]">
+          {mode === 'jogo' ? (
+            <>
+              Ache <span className="text-[#e0a34a]">{game.challenge.label}</span> em qualquer corda.{' '}
+              {MODE_HELP.jogo}
+            </>
+          ) : (
+            MODE_HELP[mode]
+          )}
+        </p>
+
+        {/* controles do modo */}
+        {contextual && (
+          <div className="mt-6 flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="type-label mr-2 text-[#6e655c]">tônica</span>
+              <span className="type-label mr-2 w-full text-[#6e655c] md:w-auto">nota-base</span>
               {TONICS.map((pc) => (
-                <ControlButton key={pc} active={tonic === pc} onClick={() => setTonic(pc)}>
+                <Chip key={pc} active={tonic === pc} onClick={() => setTonic(pc)}>
                   {noteSolfejo(spellPc(pc))}
-                </ControlButton>
+                </Chip>
               ))}
             </div>
-            {mode === 'escala' ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="type-label mr-2 text-[#6e655c]">escala</span>
-                {(Object.keys(SCALES) as ScaleId[]).map((id) => (
-                  <ControlButton key={id} active={scaleId === id} onClick={() => setScaleId(id)}>
-                    {SCALES[id].name}
-                  </ControlButton>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="type-label mr-2 text-[#6e655c]">acorde</span>
-                {CHORD_CHOICES.map((q) => (
-                  <ControlButton key={q} active={chordQ === q} onClick={() => setChordQ(q)}>
-                    {CHORDS[q].name}
-                  </ControlButton>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="type-label mr-2 w-full text-[#6e655c] md:w-auto">
+                {mode === 'escala' ? 'escala' : 'tipo de acorde'}
+              </span>
+              {mode === 'escala'
+                ? (Object.keys(SCALES) as ScaleId[]).map((id) => (
+                    <Chip key={id} active={scaleId === id} onClick={() => setScaleId(id)}>
+                      {SCALES[id].name}
+                    </Chip>
+                  ))
+                : CHORD_CHOICES.map((q) => (
+                    <Chip key={q} active={chordQ === q} onClick={() => setChordQ(q)}>
+                      {CHORDS[q].name}
+                    </Chip>
+                  ))}
+              <button
+                onClick={listen}
+                className="type-label ml-2 border border-[#e0a34a] px-4 py-2 text-[#e0a34a] transition-colors hover:bg-[#e0a34a]/10"
+              >
+                ▶ ouvir {mode === 'escala' ? 'a escala' : 'o acorde'}
+              </button>
+            </div>
           </div>
+        )}
+
+        {mode === 'descobrir' && (
+          <label className="mt-6 flex w-fit cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={showAllNames}
+              onChange={(e) => setShowAllNames(e.target.checked)}
+              className="h-4 w-4 accent-[#e0a34a]"
+            />
+            <span className="type-label text-[#a69c90]">
+              mostrar as notas naturais no braço (dó, ré, mi…)
+            </span>
+          </label>
         )}
 
         {/* o instrumento */}
         <div
-          className={`border p-3 transition-colors duration-500 md:p-6 ${
+          className={`mt-8 border p-3 transition-colors duration-500 md:p-6 ${
             game.feedback === 'acerto'
               ? 'border-[#6e8f5a] bg-[#6e8f5a]/5'
               : game.feedback === 'erro'
@@ -173,29 +234,45 @@ export function BracoPage() {
             tuning={tuning}
             roleOf={roleOf}
             onPlay={onPlay}
-            labelAll={mode === 'explorar'}
+            tapped={tapped}
+            labelMode={mode === 'descobrir' && showAllNames ? 'naturals' : 'none'}
           />
         </div>
 
-        {/* linha de status */}
-        <div className="mt-6 flex flex-wrap items-baseline justify-between gap-3">
-          <span className="type-label text-[#6e655c]">
-            {mode === 'jogo'
-              ? `${game.score.acertos}/${game.score.tentativas} · +${game.score.xp} xp`
-              : lastNote
-                ? `você tocou: ${lastNote}`
-                : 'no celular, arrasta pro lado pra ver o braço inteiro'}
-          </span>
-          {(mode === 'escala' || mode === 'acorde') && (
-            <div className="flex items-center gap-4">
+        {/* leitura grande do que acabou de soar */}
+        <div className="mt-6 flex flex-wrap items-baseline justify-between gap-4">
+          <div>
+            {readout ? (
+              <>
+                <span className="type-label block text-[#6e655c]">você tocou</span>
+                <span className="type-display text-4xl text-[#e0a34a] md:text-5xl">{readout}</span>
+              </>
+            ) : (
+              <span className="type-label text-[#6e655c]">
+                toca uma casa pra começar · no celular, arrasta o braço pro lado
+              </span>
+            )}
+          </div>
+
+          {mode === 'jogo' && (
+            <span className="type-display text-3xl text-[#a69c90]">
+              {game.score.acertos}/{game.score.tentativas}
+              <span className="type-label ml-3 text-[#e0a34a]">+{game.score.xp} xp</span>
+            </span>
+          )}
+
+          {contextual && (
+            <div className="flex items-center gap-5">
               <span className="flex items-center gap-2">
                 <span className="inline-block h-3 w-3 rounded-full bg-[#e0a34a]" />
-                <span className="type-label text-[#a69c90]">tônica</span>
+                <span className="type-label text-[#a69c90]">
+                  {noteSolfejo(spellPc(tonic))} · nota-base
+                </span>
               </span>
               <span className="flex items-center gap-2">
                 <span className="inline-block h-3 w-3 rounded-full bg-[#e0a34a]/40" />
                 <span className="type-label text-[#a69c90]">
-                  {mode === 'escala' ? 'nota da escala' : 'nota do acorde'}
+                  {mode === 'escala' ? 'resto da escala' : 'resto do acorde'}
                 </span>
               </span>
             </div>

@@ -186,23 +186,6 @@ body {
   }
 }
 
-/* Pulso em ♩=40: o andamento do herói, sentido, não decorativo */
-@keyframes beat-40 {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-  50% {
-    opacity: 0.35;
-    transform: scaleY(0.75);
-  }
-}
-.pulse-40 {
-  animation: beat-40 1.5s ease-in-out infinite; /* 60/40 = 1.5s por tempo */
-  transform-origin: bottom;
-}
-
 /* Linha de reveal (SplitText cria a máscara; isso evita flash antes do split) */
 .reveal-line {
   will-change: transform;
