@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+﻿import { useEffect, useRef } from 'react'
 import { gsap } from '../../motion/useLenisGsap'
 import { licaoDesbloqueada, licoesDe, type Unidade } from '../../content/trilha'
 import type { InstrumentSoundId } from '../../audio/instruments'
@@ -96,9 +96,9 @@ export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGui
             y1={TOP - 9}
             x2={x}
             y2={altura - 16}
-            stroke="#6e655c"
+            stroke="#8a8075"
             strokeWidth={0.7 + s * 0.24}
-            opacity={0.45}
+            opacity={0.42}
           />
         )
       })}
@@ -177,7 +177,7 @@ export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGui
               fontSize={19}
               fontFamily="Fraunces Variable, serif"
               fontWeight={560}
-              fill={n.aberta ? '#f2ede6' : '#5a5148'}
+              fill={n.aberta ? '#f2ede6' : '#8a8075'}
               pointerEvents="none"
             >
               {n.licao.titulo}
@@ -185,10 +185,10 @@ export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGui
             {n.inicioDeUnidade && (
               <text
                 x={NECK_X + NECK_W + 22}
-                y={y + 20}
-                fontSize={11}
+                y={y + 22}
+                fontSize={13}
                 fontFamily="Space Mono, monospace"
-                fill="#6e655c"
+                fill="#a69c90"
                 pointerEvents="none"
               >
                 unidade {n.unidade.n} · {n.unidade.titulo}

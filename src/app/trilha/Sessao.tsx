@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Licao, Pergunta } from '../../content/trilha'
 import { Keyboard } from '../../tools/keyboard/Keyboard'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
@@ -23,6 +23,8 @@ interface Props {
 }
 
 export function Sessao({ licao, som, onConcluir, onSair }: Props) {
+  // abertura só existe nas lições com conceito de muitas partes (ver trilha.ts)
+  const [lendoAbertura, setLendoAbertura] = useState(Boolean(licao.abertura))
   const [fila, setFila] = useState<Pergunta[]>(() => [...licao.perguntas])
   const [i, setI] = useState(0)
   const [estado, setEstado] = useState<Estado>('respondendo')
@@ -59,11 +61,11 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
   )
 
   useEffect(() => {
-    if (p && estado === 'respondendo') {
+    if (p && estado === 'respondendo' && !lendoAbertura) {
       const t = window.setTimeout(() => tocarPergunta(p), 250)
       return () => window.clearTimeout(t)
     }
-  }, [p, estado, tocarPergunta])
+  }, [p, estado, tocarPergunta, lendoAbertura])
 
   /* ---------- avaliação ---------- */
   const registrar = (certo: boolean) => {
@@ -137,6 +139,40 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
 
   if (!p) return null
 
+  /* A abertura: só nas lições de conceito com muitas peças. Uma tela, um
+     texto, um botão — nada compete com a leitura. */
+  if (lendoAbertura && licao.abertura) {
+    return (
+      <div className="flex min-h-screen flex-col bg-[#12100e] text-[#f2ede6]">
+        <div className="px-5 pt-6 md:px-10">
+          <button
+            onClick={onSair}
+            className="type-label text-[#8a8075] transition-colors hover:text-[#b2543c]"
+          >
+            sair
+          </button>
+        </div>
+        <div className="flex flex-1 items-center justify-center px-5 py-16 md:px-10">
+          <div className="w-full max-w-2xl">
+            <span className="type-label text-[#a69c90]">antes de começar</span>
+            <h1 className="type-display mt-5 text-4xl leading-tight md:text-6xl">
+              {licao.abertura.titulo}
+            </h1>
+            <p className="mt-8 text-xl leading-relaxed text-[#d5cec4] md:text-2xl">
+              {licao.abertura.texto}
+            </p>
+            <button
+              onClick={() => setLendoAbertura(false)}
+              className="type-label mt-12 w-full border-2 border-[#e0a34a] bg-[#e0a34a] px-10 py-6 text-[#12100e] transition-transform hover:-translate-y-0.5 md:w-auto"
+            >
+              entendi · vamos praticar
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const progresso = Math.round((respondidas / Math.max(fila.length, total)) * 100)
 
   return (
@@ -145,7 +181,7 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
       <div className="flex items-center gap-4 px-5 pt-6 md:px-10">
         <button
           onClick={onSair}
-          className="type-label text-[#6e655c] transition-colors hover:text-[#b2543c]"
+          className="type-label text-[#a69c90] transition-colors hover:text-[#b2543c]"
         >
           sair
         </button>
@@ -155,13 +191,13 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
             style={{ width: `${progresso}%` }}
           />
         </div>
-        <span className="type-label text-[#6e655c]">
+        <span className="type-label text-[#a69c90]">
           {respondidas}/{fila.length}
         </span>
       </div>
 
       <main className="mx-auto max-w-3xl px-5 pb-32 pt-12 md:px-10">
-        <span className="type-label text-[#6e655c]">{licao.titulo}</span>
+        <span className="type-label text-[#a69c90]">{licao.titulo}</span>
         <h1 className="type-display mt-3 text-3xl leading-tight md:text-5xl">{p.enunciado}</h1>
 
         <div className="mt-10">
@@ -195,8 +231,8 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
                           : minha
                             ? 'border-[#b2543c] bg-[#b2543c] text-[#f2ede6]'
                             : revelado
-                              ? 'border-[#2a241f] text-[#4a423a]'
-                              : 'border-[#4a423a] bg-[#1b1815] hover:-translate-y-0.5 hover:border-[#e0a34a] hover:text-[#e0a34a]'
+                              ? 'border-[#2a241f] text-[#8a8075]'
+                              : 'border-[#8a8075] bg-[#1b1815] hover:-translate-y-0.5 hover:border-[#e0a34a] hover:text-[#e0a34a]'
                       }`}
                     >
                       {alt}
@@ -212,7 +248,7 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
             <>
               <div className="mb-5 flex min-h-10 flex-wrap items-center gap-2">
                 {montado.length === 0 ? (
-                  <span className="type-label text-[#6e655c]">
+                  <span className="type-label text-[#a69c90]">
                     toque as teclas {p.ordenado ? 'na ordem' : '(a ordem não importa)'}
                   </span>
                 ) : (
@@ -274,7 +310,7 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
           {p.tipo === 'tempo' && (
             <div className="border border-[#332d27] bg-[#1b1815] p-8 text-center">
               <div className="type-display text-6xl text-[#e0a34a]">{p.bpm}</div>
-              <div className="type-label mt-1 text-[#6e655c]">batidas por minuto</div>
+              <div className="type-label mt-1 text-[#a69c90]">batidas por minuto</div>
 
               {!tocandoMetro && batidas.length === 0 && estado === 'respondendo' && (
                 <button
@@ -303,7 +339,7 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
                 </button>
               )}
 
-              <p className="type-label mt-6 text-[#6e655c]">
+              <p className="type-label mt-6 text-[#a69c90]">
                 {tocandoMetro
                   ? 'bata junto com o clique'
                   : 'você vai ouvir um clique — bata junto no botão'}
@@ -333,7 +369,7 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
               </span>
               <p className="mt-1 text-[#a69c90]">{p.explica}</p>
               {estado === 'errado' && (
-                <p className="type-label mt-2 text-[#6e655c]">
+                <p className="type-label mt-2 text-[#a69c90]">
                   essa pergunta volta no fim da lição
                 </p>
               )}

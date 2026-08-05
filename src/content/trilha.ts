@@ -75,6 +75,19 @@ export type Pergunta = QEscolha | QOuvir | QMontar | QAchar | QTempo
 export interface Licao {
   id: string
   titulo: string
+  /** Explicação ANTES das perguntas — usar com parcimônia.
+   *
+   *  A pesquisa dá uma resposta precisa, não um "sempre" ou "nunca":
+   *  - Chutar antes (efeito de pré-teste) melhora a retenção MESMO errando,
+   *    porque expõe a lacuna e faz a pessoa prestar muito mais atenção na
+   *    correção. Vale pra fato simples: nome de corda, ordem das notas.
+   *  - MAS quando o conceito tem muitas partes interligadas, tentar antes
+   *    sobrecarrega a memória de trabalho e o aprendizado piora. Aí explicar
+   *    primeiro é comprovadamente melhor.
+   *
+   *  Regra deste arquivo: só ponha abertura se a lição tiver 3+ ideias que
+   *  dependem uma da outra. Se for fato solto, deixe a pessoa chutar. */
+  abertura?: { titulo: string; texto: string }
   perguntas: Pergunta[]
 }
 
@@ -163,6 +176,13 @@ const U0_CORDAS: Unidade = {
     {
       id: 'afinar',
       titulo: 'Afinar sozinho',
+      // 3 ideias interligadas (tensão, direção da tarraxa, referência entre
+      // cordas) — a pesquisa diz pra explicar antes nesse caso
+      abertura: {
+        titulo: 'Como uma corda muda de altura',
+        texto:
+          'Afinar é controlar tensão. Apertar a tarraxa estica a corda e o som sobe; afrouxar faz descer. Só isso já resolve metade — a outra metade é saber qual é a nota certa, e pra isso a própria guitarra serve de referência: a casa 5 de uma corda dá exatamente a nota da corda seguinte solta.',
+      },
       perguntas: [
         {
           id: 'u0l2q1',
@@ -291,6 +311,11 @@ const U1: Unidade = {
     {
       id: 'doze-notas',
       titulo: 'As cinco que faltavam',
+      abertura: {
+        titulo: 'Por que 12 e não 14',
+        texto:
+          'Entre a maioria das notas cabe mais uma — o sustenido. Mas entre mi e fá, e entre si e dó, não cabe nada: elas já são vizinhas coladas. Sete naturais mais cinco sustenidos dão as 12 notas que existem. No braço, cada casa é uma delas.',
+      },
       perguntas: [
         {
           id: 'u1l2q1',
@@ -444,6 +469,11 @@ const U3_CORDAS: Unidade = {
     {
       id: 'o-que-e-acorde',
       titulo: 'O que é um acorde',
+      abertura: {
+        titulo: 'Três notas, uma emoção',
+        texto:
+          'Um acorde comum tem três notas: a fundamental, que dá o nome, e mais duas empilhadas em cima. A do meio decide tudo — um pouco mais aguda soa maior (alegre, aberto), meio tom abaixo soa menor (melancólico, fechado). Na guitarra você toca seis cordas, mas costuma estar repetindo essas mesmas três notas em oitavas diferentes.',
+      },
       perguntas: [
         {
           id: 'u3l1q1',

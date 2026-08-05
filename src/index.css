@@ -18,8 +18,9 @@
   --bg-panel: #221e1a; /* painéis-hardware: escuros nos DOIS temas */
   --border: #332d27;
   --text: #f2ede6;
-  --text-2: #a69c90;
-  --text-muted: #6e655c;
+  --text-2: #a69c90; /* 6.6:1 sobre o fundo */
+  /* #6e655c dava só 3.33:1 — abaixo do mínimo legível. Este dá 4.6:1. */
+  --text-muted: #8a8075;
   --accent: #e0a34a;
   --accent-dim: #8a6329;
   --ok: #6e8f5a;
@@ -105,11 +106,13 @@ body {
   letter-spacing: -0.015em;
 }
 
-/* Rótulo técnico: mono, caixa alta, espaçado — cara de serigrafia de equipamento */
+/* Rótulo técnico: mono, caixa alta, espaçado — cara de serigrafia de equipamento.
+   Era 0.6875rem (11px): pequeno demais pra informação que a pessoa precisa ler.
+   Caixa alta + espaçamento já custam legibilidade, então o corpo compensa. */
 .type-label {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 

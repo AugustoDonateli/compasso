@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Caminho } from '../trilha/Caminho'
 import { Sessao } from '../trilha/Sessao'
@@ -90,13 +90,13 @@ export function TrilhaPage() {
           ← compasso
         </Link>
         <div className="flex items-center gap-6">
-          <span className="type-label text-[#6e655c]">
+          <span className="type-label text-[#a69c90]">
             <span className="text-[#f2ede6]">{pct}%</span> da trilha
           </span>
-          <span className="type-label text-[#6e655c]">
+          <span className="type-label text-[#a69c90]">
             <span className="text-[#e0a34a]">{prog?.xp ?? 0}</span> xp
           </span>
-          <span className="type-label text-[#6e655c]">
+          <span className="type-label text-[#a69c90]">
             <span className="text-[#f2ede6]">{prog?.streak ?? 0}</span> dias
           </span>
           <button
@@ -154,7 +154,7 @@ export function TrilhaPage() {
           <div className="order-1 lg:order-2 lg:sticky lg:top-16">
             {proxima ? (
               <>
-                <span className="type-label text-[#6e655c]">
+                <span className="type-label text-[#a69c90]">
                   unidade {proxima.unidade.n} · {proxima.unidade.titulo}
                 </span>
                 <h1
@@ -171,7 +171,7 @@ export function TrilhaPage() {
                 </button>
                 <button
                   onClick={() => setGuia(guia ? null : proxima.unidade)}
-                  className="type-label mt-6 block text-[#6e655c] underline underline-offset-4 transition-colors hover:text-[#a69c90]"
+                  className="type-label mt-6 block text-[#a69c90] underline underline-offset-4 transition-colors hover:text-[#a69c90]"
                 >
                   {guia ? 'esconder' : 'o que essa unidade ensina'}
                 </button>
@@ -183,7 +183,7 @@ export function TrilhaPage() {
               </>
             ) : (
               <>
-                <span className="type-label text-[#6e655c]">fim do caminho, por enquanto</span>
+                <span className="type-label text-[#a69c90]">fim do caminho, por enquanto</span>
                 <h1 className="type-display mt-4 text-4xl leading-tight md:text-5xl">
                   Você chegou no fim do que existe.
                 </h1>
@@ -210,7 +210,7 @@ export function TrilhaPage() {
               onEscolher={setEmAula}
               onVerGuia={setGuia}
             />
-            <p className="type-label mt-8 text-[#4a423a]">
+            <p className="type-label mt-8 text-[#8a8075]">
               {totalLicoes} lições pra {nomeInstrumento} · mais vindo
             </p>
           </div>
