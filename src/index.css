@@ -189,6 +189,68 @@ body {
   }
 }
 
+/* ---------- animações de feedback ----------
+   Curtas de propósito: a animação confirma e sai, igual ao som. Se ela se
+   arrasta, atrasa a próxima pergunta e vira estorvo em vez de recompensa. */
+
+@keyframes acerto-pulso {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.anim-acerto {
+  animation: acerto-pulso 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes erro-tremor {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+.anim-erro {
+  animation: erro-tremor 260ms ease-in-out;
+}
+
+@keyframes sobe-e-some {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}
+/* o "+15 xp" que sobe e desaparece */
+.anim-xp {
+  animation: sobe-e-some 1.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-acerto,
+  .anim-erro,
+  .anim-xp {
+    animation-duration: 0.01ms !important;
+  }
+}
+
 /* Linha de reveal (SplitText cria a máscara; isso evita flash antes do split) */
 .reveal-line {
   will-change: transform;

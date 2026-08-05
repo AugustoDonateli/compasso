@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Hero } from './Hero'
 import { Painel } from './Painel'
 import { Preloader } from './Preloader'
-import { getProgress } from '../progress'
+import { getProgress, sincronizar } from '../progress'
 import type { UserProgress } from '../storage'
 import type { TrilhaInstrumento } from '../content/trilha'
 import { getTheme, toggleTheme, type Theme } from '../design/theme'
@@ -345,10 +345,12 @@ export function HomePage() {
   const [forcarLanding, setForcarLanding] = useState(false)
 
   useEffect(() => {
+    // mostra o local na hora (não espera rede) e junta com o servidor depois
     void getProgress().then((p) => {
       setProgresso(p)
       setCarregou(true)
     })
+    void sincronizar().then(setProgresso)
   }, [])
 
   const instrumento = (localStorage.getItem('compasso.instrumento') ??

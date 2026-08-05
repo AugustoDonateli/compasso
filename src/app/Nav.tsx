@@ -11,6 +11,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 const FERRAMENTAS = [
   { to: '/trilha', nome: 'trilha' },
+  { to: '/ranking', nome: 'ranking' },
   { to: '/afinador', nome: 'afinador' },
   { to: '/ouvido', nome: 'ouvido' },
   { to: '/braco', nome: 'mapa das notas' },

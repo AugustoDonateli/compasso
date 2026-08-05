@@ -7,6 +7,7 @@ import { OuvidoPage } from './app/pages/OuvidoPage'
 import { TrilhaPage } from './app/pages/TrilhaPage'
 import { AfinadorPage } from './app/pages/AfinadorPage'
 import { DesmontadorPage } from './app/pages/DesmontadorPage'
+import { RankingPage } from './app/pages/RankingPage'
 import { Nav } from './app/Nav'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
@@ -49,6 +50,7 @@ function App() {
         <Route path="/trilha" element={<TrilhaPage />} />
         <Route path="/afinador" element={<AfinadorPage />} />
         <Route path="/desmontador" element={<DesmontadorPage />} />
+        <Route path="/ranking" element={<RankingPage />} />
       </Routes>
     </BrowserRouter>
   )

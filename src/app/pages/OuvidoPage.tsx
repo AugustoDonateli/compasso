@@ -14,6 +14,7 @@ import { Fretboard } from '../../tools/fretboard/Fretboard'
 import { playMidi, preloadInstrument, type InstrumentSoundId } from '../../audio/instruments'
 import { useWaveformCanvas } from '../../audio/useAnalyser'
 import { award } from '../../progress'
+import { somAcerto, somErro } from '../../audio/feedback'
 import { midiToPc, type PitchClass } from '../../theory/notes'
 import { TUNINGS } from '../../theory/fretboard'
 
@@ -165,6 +166,8 @@ export function OuvidoPage() {
     if (answered) return
     setAnswered(id)
     const correct = isCorrect(question, id)
+    if (correct) somAcerto()
+    else somErro()
     setScore((s) => ({
       acertos: s.acertos + (correct ? 1 : 0),
       tentativas: s.tentativas + 1,

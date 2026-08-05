@@ -9,6 +9,7 @@ import { midiToPc, noteSolfejo, spellPc, type PitchClass } from '../../theory/no
 import { playMidi, type InstrumentSoundId } from '../../audio/instruments'
 import { ensureAudio } from '../../audio/engine'
 import { playClick } from '../../audio/harmonics'
+import { somAcerto, somConquista, somErro } from '../../audio/feedback'
 
 /* O motor da sessão: recebe uma lição (dados) e a executa.
    Ele NÃO conhece nenhuma pergunta específica — só os cinco tipos.
@@ -75,8 +76,12 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
   const registrar = (certo: boolean) => {
     setEstado(certo ? 'certo' : 'errado')
     setRespondidas((r) => r + 1)
-    if (certo) setAcertos((a) => a + 1)
-    else {
+    // som de menos de 1 segundo: recompensa e sai de cena antes da próxima
+    if (certo) {
+      somAcerto()
+      setAcertos((a) => a + 1)
+    } else {
+      somErro()
       // sem punição: a pergunta errada volta no fim da fila pra você tentar de novo
       setFila((f) => [...f, p])
     }
@@ -88,8 +93,10 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
     setMontado([])
     setBatidas([])
     setSemMicrofone(false)
-    if (i + 1 >= fila.length) onConcluir(acertos, total)
-    else setI(i + 1)
+    if (i + 1 >= fila.length) {
+      somConquista() // a recompensa escala com a conquista
+      onConcluir(acertos, total)
+    } else setI(i + 1)
   }
 
   /* ---------- tipo: tempo (bater no pulso) ---------- */
@@ -205,7 +212,14 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
 
       <main className="mx-auto max-w-3xl px-5 pb-32 pt-12 md:px-10">
         <span className="type-label text-[#a69c90]">{licao.titulo}</span>
-        <h1 className="type-display mt-3 text-3xl leading-tight md:text-5xl">{p.enunciado}</h1>
+        <h1
+          key={`${p.id}-${estado}`}
+          className={`type-display mt-3 text-3xl leading-tight md:text-5xl ${
+            estado === 'certo' ? 'anim-acerto' : estado === 'errado' ? 'anim-erro' : ''
+          }`}
+        >
+          {p.enunciado}
+        </h1>
 
         <div className="mt-10">
           {/* ESCOLHA e OUVIR: alternativas grandes */}
@@ -415,6 +429,12 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
               >
                 {estado === 'certo' ? 'Isso.' : 'Ainda não.'}
               </span>
+              {/* o xp subindo e sumindo — recompensa visível sem atrapalhar */}
+              {estado === 'certo' && (
+                <span className="type-label anim-xp ml-4 inline-block text-[#e0a34a]">
+                  +10 xp
+                </span>
+              )}
               <p className="mt-1 text-[#a69c90]">{p.explica}</p>
               {estado === 'errado' && (
                 <p className="type-label mt-2 text-[#a69c90]">
