@@ -126,17 +126,20 @@ body {
   align-items: center;
   gap: 1rem;
 }
-.barline::before,
+/* traço curto à esquerda, número + rótulo, linha longa preenchendo o resto —
+   como número de compasso numa partitura de verdade */
+.barline::before {
+  content: '';
+  height: 1px;
+  width: 1.5rem;
+  flex: none;
+  background: var(--border);
+}
 .barline::after {
   content: '';
   height: 1px;
   flex: 1;
   background: var(--border);
-}
-.barline-heavy::before,
-.barline-heavy::after {
-  height: 2px;
-  background: var(--text-2);
 }
 
 /* Número do compasso: ┃2┃ */

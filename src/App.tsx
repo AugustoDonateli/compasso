@@ -38,12 +38,13 @@ async function playChord(rootPc: number, quality: ChordQuality) {
 
 /* ---------- peças da partitura ---------- */
 
-function Barline({ measure, label, tempo }: { measure: number; label: string; tempo?: string }) {
+/* Divisor de seção. Sem andamento em italiano: jargão decorativo contradiz
+   a própria tese do site (dor C). A metáfora só aparece onde significa algo. */
+function Barline({ measure, label }: { measure: number; label: string }) {
   return (
     <div className="barline px-5 py-10 md:px-10">
       <span className="measure-no">{measure}</span>
-      <span className="type-label text-ink-muted">{label}</span>
-      {tempo && <span className="type-label ml-auto hidden text-ink-muted md:inline">{tempo}</span>}
+      <span className="type-label whitespace-nowrap text-ink-muted">{label}</span>
     </div>
   )
 }
@@ -151,9 +152,6 @@ function FieldMeasure() {
   return (
     <section className="bg-[#161310] py-24 md:py-36">
       <div className="px-5 md:px-10">
-        <div className="mb-6 md:mb-8">
-          <span className="type-label text-[#6e655c]">prova, não promessa — toca aí embaixo</span>
-        </div>
         <div className="mb-16 flex flex-wrap items-end justify-between gap-6 md:mb-24">
           <div className="max-w-2xl">
             <h2
@@ -167,7 +165,7 @@ function FieldMeasure() {
               o que o Compasso quer dizer com <span className="text-[#e0a34a]">tocar a teoria</span>.
             </p>
           </div>
-          <span className="type-label text-[#6e655c]">campo harmônico · ♩ = 92</span>
+          <span className="type-label text-[#6e655c]">o nome disso é campo harmônico</span>
         </div>
 
         {/* o compasso: barra pesada abre, sete tempos, barra pesada fecha */}
@@ -215,58 +213,55 @@ function FieldMeasure() {
   )
 }
 
-/* ┃4┃ O programa do concerto: o que vem — cada peça responde uma dor */
+/* ┃4┃ O que vem — uma metáfora só, dita uma vez, e a lista limpa */
 const PROGRAM = [
   {
     n: '01',
     title: 'O braço',
     desc: 'a guitarra e o baixo na tela: toca a casa, ouve a nota, vê a escala acender',
-    tempo: 'em ensaio',
   },
   {
     n: '02',
     title: 'Groove machine',
     desc: 'monta a levada e a partitura se escreve sozinha — leitura de ritmo sem sentir',
-    tempo: 'em ensaio',
   },
   {
     n: '03',
     title: 'Desmontador',
     desc: 'abre uma música que você ama e vê a teoria trabalhando por dentro dela',
-    tempo: 'em ensaio',
   },
   {
     n: '04',
     title: 'Ouvido',
     desc: 'treina reconhecer nota e intervalo de ouvido — o superpoder de todo músico',
-    tempo: 'em ensaio',
   },
 ]
 
 function Program() {
+  const headRef = useRef<HTMLHeadingElement | null>(null)
+  useLineReveal(headRef)
   return (
     <section className="px-5 py-24 md:px-10 md:py-32">
-      <div className="mb-6 md:ml-[22%]">
-        <span className="type-label text-ink-muted">programa · construído em público</span>
-      </div>
-      <div className="mb-14 md:ml-[22%]">
-        <p className="max-w-lg text-lg text-ink-2">
-          O Compasso está sendo montado peça por peça, como um show sendo ensaiado. Isso aqui é o
-          que sobe ao palco em seguida:
+      <div className="mb-16 md:mb-20 md:ml-[22%] md:max-w-2xl">
+        <h2 ref={headRef} className="type-display text-4xl leading-tight md:text-6xl">
+          Quatro ferramentas em construção
+        </h2>
+        <p className="mt-6 max-w-xl text-lg text-ink-2">
+          O Compasso está sendo feito peça por peça, e em público. Nada aqui é promessa vaga — é o
+          que já está desenhado, na ordem em que fica pronto.
         </p>
       </div>
       <div>
         {PROGRAM.map((item) => (
           <div
             key={item.n}
-            className="group flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line py-7 transition-colors last:border-b hover:bg-raised md:gap-x-12"
+            className="group grid grid-cols-[2rem_1fr] items-baseline gap-x-4 gap-y-3 border-t border-line py-8 transition-colors last:border-b hover:bg-raised md:grid-cols-[3rem_16rem_1fr] md:gap-x-10 md:py-10"
           >
             <span className="font-mono text-sm text-ink-muted">{item.n}</span>
-            <h3 className="type-display text-3xl text-ink transition-transform duration-300 group-hover:translate-x-2 md:text-5xl">
+            <h3 className="type-display text-3xl text-ink transition-transform duration-300 group-hover:translate-x-1 md:text-4xl">
               {item.title}
             </h3>
-            <p className="text-ink-2 md:ml-auto md:max-w-xs md:text-right">{item.desc}</p>
-            <span className="type-label w-full text-right text-brass md:w-auto">{item.tempo}</span>
+            <p className="col-start-2 max-w-md text-ink-2 md:col-start-3">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -329,12 +324,12 @@ function App() {
     <div className="min-h-screen bg-base text-ink">
       <Preloader onDone={() => setReady(true)} />
       <Hero />
-      <Barline measure={2} label="as três dores" tempo="andante" />
+      <Barline measure={2} label="por que este site existe" />
       <Manifesto />
       <Marquee />
-      <Barline measure={3} label="prova: toca a teoria" tempo="moderato" />
+      <Barline measure={3} label="veja funcionando agora" />
       <FieldMeasure />
-      <Barline measure={4} label="o que vem" tempo="allegro" />
+      <Barline measure={4} label="o que vem por aí" />
       <Program />
       <Footer theme={theme} onToggle={() => setThemeState(toggleTheme())} />
     </div>
