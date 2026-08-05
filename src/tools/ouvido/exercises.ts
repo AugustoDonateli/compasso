@@ -7,7 +7,7 @@ import { midiToPc, noteId, noteSolfejo, spellPc } from '../../theory/notes'
  *  Regra de futuro: a trilha vai apontar pra estes mesmos exercícios
  *  ("hoje: 10 intervalos"); nada aqui sabe de React nem de Tone. */
 
-export type ExerciseKind = 'nota' | 'intervalo' | 'acorde'
+export type ExerciseKind = 'nota' | 'intervalo' | 'acorde' | 'braco'
 export type Level = 'facil' | 'completo'
 
 export interface Question {
@@ -42,6 +42,23 @@ function pick<T>(arr: T[], rand: () => number): T {
 }
 
 export function generate(kind: ExerciseKind, level: Level, rand: () => number = Math.random): Question {
+  if (kind === 'braco') {
+    // ouvido -> instrumento: soa uma nota, você acha ela no braço.
+    // A resposta é a classe de altura: a mesma nota mora em vários lugares,
+    // e descobrir isso É a lição.
+    const pcs = level === 'facil' ? EASY_PCS : ALL_PCS
+    const pc = pick(pcs, rand)
+    const spelled = spellPc(pc as never)
+    return {
+      kind,
+      midis: [C4 + pc],
+      together: false,
+      answerId: String(pc),
+      options: [], // responde-se tocando no braço, não escolhendo alternativa
+      explanation: `Era ${noteSolfejo(spelled)} (${noteId(spelled)}) — e ela mora em várias casas do braço, não só numa.`,
+    }
+  }
+
   if (kind === 'nota') {
     const pcs = level === 'facil' ? EASY_PCS : ALL_PCS
     const pc = pick(pcs, rand)
@@ -104,6 +121,22 @@ export function generate(kind: ExerciseKind, level: Level, rand: () => number = 
 
 export function isCorrect(q: Question, answerId: string): boolean {
   return q.answerId === answerId
+}
+
+/** Registro de cada instrumento — treinar ouvido na região onde você toca.
+ *  Baixista ouve intervalo no grave, onde ele é mais denso e difícil;
+ *  treinar em dó central não prepara pra isso. */
+export const REGISTER_SHIFT: Record<string, number> = {
+  piano: 0,
+  guitarra: -12,
+  baixo: -24,
+}
+
+/** Desloca a pergunta de oitava sem mexer na resposta (a classe de altura
+ *  e o intervalo continuam os mesmos — só a região muda). */
+export function transposeQuestion(q: Question, semitones: number): Question {
+  if (semitones === 0) return q
+  return { ...q, midis: q.midis.map((m) => m + semitones) }
 }
 
 /** Rótulo da nota de um MIDI (pra mostrar o que soou) */

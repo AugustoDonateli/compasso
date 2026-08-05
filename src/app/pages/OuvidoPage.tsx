@@ -3,15 +3,19 @@ import { Link } from 'react-router-dom'
 import {
   generate,
   isCorrect,
+  REGISTER_SHIFT,
+  transposeQuestion,
   type ExerciseKind,
   type Level,
   type Question,
 } from '../../tools/ouvido/exercises'
 import { Keyboard } from '../../tools/keyboard/Keyboard'
-import { playMidi, preloadInstrument } from '../../audio/instruments'
+import { Fretboard } from '../../tools/fretboard/Fretboard'
+import { playMidi, preloadInstrument, type InstrumentSoundId } from '../../audio/instruments'
 import { useWaveformCanvas } from '../../audio/useAnalyser'
 import { award } from '../../progress'
-import type { PitchClass } from '../../theory/notes'
+import { midiToPc, type PitchClass } from '../../theory/notes'
+import { TUNINGS } from '../../theory/fretboard'
 
 /* ┃ferramenta 04┃ Treino de ouvido.
    O exercício acontece num PALCO: onda sonora real no topo, pergunta em
@@ -22,12 +26,14 @@ const KIND_LABEL: Record<ExerciseKind, string> = {
   nota: 'nota',
   intervalo: 'intervalo',
   acorde: 'acorde',
+  braco: 'ache no braço',
 }
 
 const KIND_PROMPT: Record<ExerciseKind, string> = {
   nota: 'Que nota é essa?',
   intervalo: 'Que intervalo é esse?',
   acorde: 'Que acorde é esse?',
+  braco: 'Ache essa nota no braço.',
 }
 
 const KIND_HELP: Record<ExerciseKind, string> = {
@@ -36,6 +42,14 @@ const KIND_HELP: Record<ExerciseKind, string> = {
     'Intervalo é a distância entre duas notas. Reconhecer isso de ouvido é o que te faz tirar música sem procurar cifra.',
   acorde:
     'Maior soa aberto e alegre; menor soa fechado e melancólico. Ouvir essa diferença é o superpoder mais útil que existe.',
+  braco:
+    'A ponte entre ouvido e instrumento: você ouve a nota e acha ela no braço. Vale qualquer casa que dê aquela nota — e existem várias.',
+}
+
+const SOUND_LABEL: Record<InstrumentSoundId, string> = {
+  piano: 'piano',
+  guitarra: 'guitarra',
+  baixo: 'baixo',
 }
 
 function Segmented<T extends string>({
@@ -74,6 +88,7 @@ function Segmented<T extends string>({
 export function OuvidoPage() {
   const [kind, setKind] = useState<ExerciseKind>('acorde')
   const [level, setLevel] = useState<Level>('facil')
+  const [sound, setSound] = useState<InstrumentSoundId>('piano')
   const [question, setQuestion] = useState<Question>(() => generate('acorde', 'facil'))
   const [answered, setAnswered] = useState<string | null>(null)
   const [score, setScore] = useState({ acertos: 0, tentativas: 0, xp: 0 })
@@ -82,19 +97,31 @@ export function OuvidoPage() {
   const timerRef = useRef<number | null>(null)
   const waveRef = useWaveformCanvas('#e0a34a')
 
+  /** o braço é de corda: no piano não faz sentido, então o modo força guitarra */
+  const effectiveSound: InstrumentSoundId =
+    kind === 'braco' && sound === 'piano' ? 'guitarra' : sound
+
   useEffect(() => {
-    preloadInstrument('piano')
+    preloadInstrument(effectiveSound)
+  }, [effectiveSound])
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current)
     }
   }, [])
 
-  const playQuestion = useCallback((q: Question) => {
-    q.midis.forEach((m, i) => {
-      const delay = q.together ? i * 12 : i * 620
-      window.setTimeout(() => void playMidi('piano', m, q.together ? 2.4 : 1.5), delay)
-    })
-  }, [])
+  const playQuestion = useCallback(
+    (q: Question) => {
+      // toca no registro do instrumento escolhido
+      const shifted = transposeQuestion(q, REGISTER_SHIFT[effectiveSound] ?? 0)
+      shifted.midis.forEach((m, i) => {
+        const delay = shifted.together ? i * 12 : i * 620
+        window.setTimeout(() => void playMidi(effectiveSound, m, shifted.together ? 2.4 : 1.5), delay)
+      })
+    },
+    [effectiveSound],
+  )
 
   /** Cancela a próxima pergunta agendada — sem isso, trocar de treino logo
    *  após responder deixava o temporizador antigo sobrescrever a pergunta nova. */
@@ -148,6 +175,13 @@ export function OuvidoPage() {
     cancelPending()
     setLevel(l)
     nextQuestion(kind, l)
+  }
+
+  const changeSound = (s: InstrumentSoundId) => {
+    if (s === sound) return
+    cancelPending()
+    setSound(s)
+    setAnswered(null)
   }
 
   const verdict = answered ? (isCorrect(question, answered) ? 'acerto' : 'erro') : null
@@ -222,6 +256,15 @@ export function OuvidoPage() {
               { id: 'completo' as Level, label: 'completo' },
             ]}
           />
+          <Segmented
+            label="som"
+            value={effectiveSound}
+            onChange={changeSound}
+            options={(kind === 'braco'
+              ? (['guitarra', 'baixo'] as InstrumentSoundId[])
+              : (['piano', 'guitarra', 'baixo'] as InstrumentSoundId[])
+            ).map((s) => ({ id: s, label: SOUND_LABEL[s] }))}
+          />
           <p className="max-w-md text-sm text-[#6e655c]">{KIND_HELP[kind]}</p>
         </div>
 
@@ -271,8 +314,22 @@ export function OuvidoPage() {
               )}
             </div>
 
-            {/* a resposta: teclado pra nota, botões grandes pro resto */}
-            {kind === 'nota' ? (
+            {/* a resposta acontece no instrumento quando faz sentido:
+                braço pra corda, teclado pra nota, botões pro resto */}
+            {kind === 'braco' ? (
+              <Fretboard
+                tuning={TUNINGS[effectiveSound === 'baixo' ? 'baixo' : 'guitarra']}
+                onPlay={(_s, _f, midi) => {
+                  void playMidi(effectiveSound, midi)
+                  if (!answered) answer(String(midiToPc(midi)))
+                }}
+                roleOf={
+                  answered
+                    ? (pc) => (pc === (Number(question.answerId) as PitchClass) ? 'tonica' : 'fora')
+                    : undefined
+                }
+              />
+            ) : kind === 'nota' ? (
               <div className="mx-auto max-w-3xl">
                 <Keyboard
                   enabledPcs={question.options.map((o) => Number(o.id) as PitchClass)}
