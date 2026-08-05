@@ -590,6 +590,355 @@ const U3_CORDAS: Unidade = {
 }
 
 /* ============================================================
+   U4 a U8 — TEORIA. Servem os seis instrumentos de uma vez.
+   ============================================================ */
+
+const U4: Unidade = {
+  id: 'distancias',
+  n: 4,
+  titulo: 'Distâncias',
+  guia: 'Sair daqui contando intervalo sem errar e reconhecendo de ouvido os três que aparecem em tudo: oitava, quinta e terça.',
+  licoes: [
+    {
+      id: 'contar-intervalo',
+      titulo: 'Contar sem errar',
+      // o erro de contagem é sutil e tem 3 partes amarradas — explica antes
+      abertura: {
+        titulo: 'Intervalo conta nomes, não passos',
+        texto:
+          'Aqui mora o erro mais comum de toda a teoria musical. De dó até mi você anda dois passos — então parece que é uma "segunda". Mas intervalo se conta pelos NOMES das notas, incluindo as duas pontas: dó, ré, mi são três nomes, logo é uma TERÇA. Por isso a matemática parece torta: uma segunda mais uma segunda dá uma terça, não uma quarta.',
+      },
+      perguntas: [
+        {
+          id: 't4l1q1',
+          tipo: 'escolha',
+          enunciado: 'De dó até sol, qual é o intervalo?',
+          // engano real: contar os passos (4) em vez dos nomes (5)
+          alternativas: ['uma quarta', 'uma quinta', 'uma sexta'],
+          correta: 1,
+          explica:
+            'Quinta. Conte os nomes: dó, ré, mi, fá, sol — cinco. Quem responde quarta contou os passos entre as notas em vez dos nomes, que é exatamente a armadilha.',
+        },
+        {
+          id: 't4l1q2',
+          tipo: 'escolha',
+          enunciado: 'De mi até mi, a mesma nota. Que intervalo é?',
+          alternativas: ['zero, não é intervalo', 'uníssono, ou primeira', 'uma segunda'],
+          correta: 1,
+          explica:
+            'Uníssono — também chamado de primeira. Como a contagem inclui as duas pontas, a mesma nota já conta como um. É por isso que não existe "intervalo zero" na nomenclatura musical.',
+        },
+        {
+          id: 't4l1q3',
+          tipo: 'montar',
+          enunciado: 'Toque dó e a nota que forma uma terça com ele.',
+          alvo: [0, 4],
+          ordenado: true,
+          explica:
+            'Dó e mi: três nomes contando as pontas. Essa é a distância que decide se um acorde soa alegre ou melancólico — a terça é a nota mais expressiva da música ocidental.',
+        },
+      ],
+    },
+    {
+      id: 'ouvir-distancias',
+      titulo: 'As três que você já conhece',
+      perguntas: [
+        {
+          id: 't4l2q1',
+          tipo: 'ouvir',
+          enunciado: 'Que distância é essa?',
+          midis: [C4, C4 + 7],
+          junto: true,
+          alternativas: ['terça', 'quinta', 'oitava'],
+          correta: 1,
+          explica:
+            'Quinta — o som mais aberto e estável depois da oitava. É ela sozinha que faz o power chord de qualquer riff de rock, sem terça nenhuma no meio.',
+        },
+        {
+          id: 't4l2q2',
+          tipo: 'ouvir',
+          enunciado: 'E essa?',
+          midis: [C4, C4 + 3],
+          junto: true,
+          alternativas: ['terça menor', 'terça maior', 'quarta'],
+          correta: 0,
+          explica:
+            'Terça menor — meio tom menor que a maior, e é só isso que separa um acorde alegre de um melancólico. Uma nota. Meio tom.',
+        },
+        {
+          id: 't4l2q3',
+          tipo: 'ouvir',
+          enunciado: 'Última: que distância?',
+          midis: [C4, C4 + 12],
+          junto: false,
+          alternativas: ['sétima', 'oitava', 'quinta'],
+          correta: 1,
+          explica:
+            'Oitava — a mesma nota, o dobro da frequência. É o intervalo mais fácil de reconhecer, e por isso o primeiro que todo mundo aprende de ouvido.',
+        },
+      ],
+    },
+  ],
+}
+
+const U5: Unidade = {
+  id: 'a-regua',
+  n: 5,
+  titulo: 'A régua',
+  guia: 'Sair daqui entendendo que a escala maior é um padrão de distâncias — e montando ela em qualquer nota, não só em dó.',
+  licoes: [
+    {
+      id: 'padrao-da-escala',
+      titulo: 'O padrão',
+      abertura: {
+        titulo: 'A escala maior é uma receita, não uma lista',
+        texto:
+          'Muita gente decora "dó ré mi fá sol lá si" e acha que escala maior é isso. Mas essas notas são só o resultado da receita aplicada no dó. A receita em si é uma sequência de distâncias: tom, tom, semitom, tom, tom, tom, semitom. Aplique essa mesma sequência começando em qualquer nota e você tem a escala maior dela — por isso as outras tonalidades precisam de sustenidos ou bemóis.',
+      },
+      perguntas: [
+        {
+          id: 't5l1q1',
+          tipo: 'escolha',
+          enunciado: 'Por que a escala de dó maior não tem nenhum sustenido?',
+          // engano real: achar que dó é "especial" ou que escala = teclas brancas
+          alternativas: [
+            'porque dó é a nota principal da música',
+            'coincidência: as teclas brancas já caem no padrão tom-tom-semitom',
+            'porque escala maior nunca tem sustenido',
+          ],
+          correta: 1,
+          explica:
+            'É coincidência de onde ficam os semitons naturais. Mi–fá e si–dó já são semitons, e eles caem justo nos lugares que a receita pede. Em qualquer outra tonalidade a conta não fecha sozinha, e aí entram os sustenidos ou bemóis.',
+        },
+        {
+          id: 't5l1q2',
+          tipo: 'montar',
+          enunciado: 'Monte a escala de sol maior, do sol ao fá♯.',
+          alvo: [7, 9, 11, 0, 2, 4, 6],
+          ordenado: true,
+          explica:
+            'Sol, lá, si, dó, ré, mi, fá♯. Aquele fá♯ no fim não é enfeite: sem ele o último passo daria um tom em vez de semitom, e a escala deixaria de soar maior.',
+        },
+        {
+          id: 't5l1q3',
+          tipo: 'escolha',
+          enunciado: 'O que significa dizer que uma música "está em ré maior"?',
+          alternativas: [
+            'que ela começa na nota ré',
+            'que ela usa as notas da escala de ré maior e volta pro ré como casa',
+            'que o instrumento foi afinado em ré',
+          ],
+          correta: 1,
+          explica:
+            'A tonalidade diz quais notas a música usa e qual delas é a casa — aquela em que a música soa resolvida. Não tem a ver com a primeira nota: muita música em ré maior começa em outra nota e mesmo assim "puxa" pro ré.',
+        },
+      ],
+    },
+  ],
+}
+
+const U6: Unidade = {
+  id: 'acordes-de-verdade',
+  n: 6,
+  titulo: 'Como acorde é feito',
+  guia: 'Sair daqui construindo qualquer acorde sozinho em vez de decorar desenho — e sabendo o que a sétima acrescenta.',
+  licoes: [
+    {
+      id: 'empilhar-tercas',
+      titulo: 'Empilhar terças',
+      abertura: {
+        titulo: 'Pule uma, pegue a próxima',
+        texto:
+          'Acorde não é um punhado aleatório de notas: é terça em cima de terça. Comece numa nota da escala, pule a vizinha, pegue a seguinte, pule de novo, pegue de novo. Fazendo isso a partir do dó você tem dó, mi e sol — um acorde de dó. A mesma regra funciona em qualquer grau da escala e é por isso que dá pra construir acorde sem decorar nada.',
+      },
+      perguntas: [
+        {
+          id: 't6l1q1',
+          tipo: 'montar',
+          enunciado: 'Comece no ré e empilhe duas terças, usando só notas naturais.',
+          alvo: [2, 5, 9],
+          ordenado: false,
+          explica:
+            'Ré, fá, lá. Repare que saiu um acorde MENOR sem você pedir — a distância entre ré e fá é uma terça menor. É a escala que decide, não você.',
+        },
+        {
+          id: 't6l1q2',
+          tipo: 'escolha',
+          enunciado: 'Qual nota decide se o acorde é maior ou menor?',
+          alternativas: ['a fundamental, embaixo', 'a do meio, a terça', 'a de cima, a quinta'],
+          correta: 1,
+          explica:
+            'A do meio. Fundamental e quinta são as mesmas nos dois; só a terça muda, meio tom pra cima ou pra baixo. Uma nota decide se a música soa alegre ou melancólica.',
+        },
+        {
+          id: 't6l1q3',
+          tipo: 'ouvir',
+          enunciado: 'Empilhei mais uma terça em cima. Que acorde virou?',
+          midis: [C4, C4 + 4, C4 + 7, C4 + 10],
+          junto: true,
+          alternativas: ['continua maior simples', 'ganhou uma sétima — soa "pedindo" resolução'],
+          correta: 1,
+          explica:
+            'É um acorde com sétima, e ele soa incompleto de propósito: parece que quer ir pra algum lugar. Essa tensão é o motor de quase toda música popular — é o que faz o refrão parecer que "chegou".',
+        },
+      ],
+    },
+  ],
+}
+
+const U7: Unidade = {
+  id: 'a-familia',
+  n: 7,
+  titulo: 'A família',
+  guia: 'Sair daqui entendendo por que certos acordes combinam — e reconhecendo a sequência que está em metade das músicas que você conhece.',
+  licoes: [
+    {
+      id: 'sete-acordes',
+      titulo: 'Os sete da casa',
+      perguntas: [
+        {
+          id: 't7l1q1',
+          tipo: 'escolha',
+          enunciado: 'Por que dó, fá e sol combinam tão bem numa música em dó?',
+          // engano real: achar que é regra decorada, não consequência
+          alternativas: [
+            'porque são os acordes mais fáceis de tocar',
+            'porque os três saem só de notas da escala de dó',
+            'porque são vizinhos no braço da guitarra',
+          ],
+          correta: 1,
+          explica:
+            'Todos os três são construídos com notas da mesma escala — por isso nenhum "briga" com a melodia. Combinar não é regra decorada: é consequência de virem da mesma família.',
+        },
+        {
+          id: 't7l1q2',
+          tipo: 'escolha',
+          enunciado: 'Numa tonalidade maior, quantos acordes saem da escala?',
+          alternativas: ['três', 'cinco', 'sete'],
+          correta: 2,
+          explica:
+            'Sete — um em cada grau da escala. Três saem maiores, três menores e um diminuto. Sabendo isso você adivinha o próximo acorde de uma música que nunca ouviu.',
+        },
+      ],
+    },
+    {
+      id: 'progressao',
+      titulo: 'A sequência que está em tudo',
+      perguntas: [
+        {
+          id: 't7l2q1',
+          tipo: 'ouvir',
+          enunciado: 'Escute essa sequência de quatro acordes. Soa familiar?',
+          midis: [C4, C4 + 4, C4 + 7],
+          junto: true,
+          alternativas: ['sim, já ouvi isso em muita música', 'não, nunca ouvi'],
+          correta: 0,
+          explica:
+            'É o grau I, o começo do I-V-vi-IV — a sequência por trás de um número absurdo de sucessos pop, rock e sertanejo. Depois de perceber isso você começa a ouvir ela em todo lugar.',
+        },
+        {
+          id: 't7l2q2',
+          tipo: 'escolha',
+          enunciado: 'Por que tantas músicas diferentes usam a mesma sequência de acordes?',
+          alternativas: [
+            'preguiça dos compositores',
+            'porque a sequência cria tensão e resolução de um jeito que o ouvido gosta',
+            'porque é a única que funciona',
+          ],
+          correta: 1,
+          explica:
+            'Porque funciona: ela sai da casa, cria tensão e volta. O que diferencia as músicas é melodia, ritmo, letra e arranjo — a mesma base sustenta coisas completamente diferentes.',
+        },
+      ],
+    },
+  ],
+}
+
+const U8: Unidade = {
+  id: 'tonalidade',
+  n: 8,
+  titulo: 'Tonalidade',
+  guia: 'O assunto mais temido da teoria, devagar: por que existe aquele monte de sustenido no começo da partitura e por que a ordem deles nunca muda.',
+  licoes: [
+    {
+      id: 'armadura',
+      titulo: 'Aqueles sustenidos no começo',
+      abertura: {
+        titulo: 'Um aviso, não uma decoração',
+        texto:
+          'Aqueles sustenidos logo depois da clave são a armadura, e ela é só um aviso dado uma vez: "nesta música, todo fá é fá♯". Sem ela, o compositor teria que escrever o sinal em cada fá da página inteira. Não é enfeite nem regra decorada — é economia de escrita, e ela também te diz de cara em que tonalidade a música está.',
+      },
+      perguntas: [
+        {
+          id: 't8l1q1',
+          tipo: 'escolha',
+          enunciado: 'A partitura tem um fá♯ na armadura. O que isso significa?',
+          alternativas: [
+            'que a música começa em fá♯',
+            'que todo fá da música é tocado como fá♯',
+            'que existe um fá♯ em algum lugar da música',
+          ],
+          correta: 1,
+          explica:
+            'Todo fá vira fá♯, do começo ao fim, em qualquer oitava. É por isso que a armadura fica no início de cada linha: ela vale pra página toda.',
+        },
+        {
+          id: 't8l1q2',
+          tipo: 'escolha',
+          enunciado: 'Um fá♯ na armadura indica qual tonalidade maior?',
+          alternativas: ['fá maior', 'sol maior', 'ré maior'],
+          correta: 1,
+          explica:
+            'Sol maior — a escala que você montou lá atrás, com o fá♯ no fim. Um truque: o último sustenido da armadura é sempre o sétimo grau, então a tônica é a nota logo acima dele.',
+        },
+      ],
+    },
+    {
+      id: 'ordem-dos-sustenidos',
+      titulo: 'A ordem nunca muda',
+      perguntas: [
+        {
+          id: 't8l2q1',
+          tipo: 'escolha',
+          enunciado: 'Os sustenidos aparecem na armadura numa ordem fixa. Qual é?',
+          // engano real: achar que é ordem alfabética ou arbitrária
+          alternativas: [
+            'dó ré mi fá sol lá si, em ordem',
+            'fá dó sol ré lá mi si',
+            'a ordem varia conforme a tonalidade',
+          ],
+          correta: 1,
+          explica:
+            'Fá, dó, sol, ré, lá, mi, si — e nunca muda. Uma tonalidade com dois sustenidos tem fá♯ e dó♯; com três, acrescenta o sol♯. Nunca pula nem inverte.',
+        },
+        {
+          id: 't8l2q2',
+          tipo: 'escolha',
+          enunciado: 'Essa ordem é aleatória ou tem lógica?',
+          alternativas: [
+            'é aleatória, tem que decorar mesmo',
+            'cada sustenido está uma quinta acima do anterior',
+            'segue a ordem das cordas da guitarra',
+          ],
+          correta: 1,
+          explica:
+            'De quinta em quinta: de fá pra dó é uma quinta, de dó pra sol é uma quinta, e assim por diante. É a mesma lógica do círculo das quintas — e é por isso que os bemóis aparecem exatamente na ordem inversa.',
+        },
+        {
+          id: 't8l2q3',
+          tipo: 'montar',
+          enunciado: 'Toque os quatro primeiros sustenidos na ordem da armadura.',
+          alvo: [6, 1, 8, 3],
+          ordenado: true,
+          explica:
+            'Fá♯, dó♯, sol♯, ré♯ — cada um uma quinta acima do anterior. Tocando você sente que não é lista decorada: é uma sequência que anda sempre com o mesmo passo.',
+        },
+      ],
+    },
+  ],
+}
+
+/* ============================================================
    BAIXO — mesmas cordas da guitarra, papel completamente outro
    ============================================================ */
 
@@ -1149,6 +1498,11 @@ const TODAS_UNIDADES: Unidade[] = [
   U2,
   U3_CORDAS,
   U3_BATERIA,
+  U4,
+  U5,
+  U6,
+  U7,
+  U8,
 ]
 
 /** A trilha de um instrumento: unidades universais + as do galho dele. */
