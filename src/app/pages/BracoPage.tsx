@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
 import { useAcheANota } from '../../tools/fretboard/AcheANota'
 import { TUNINGS, midiAt, positionsOf, type InstrumentId } from '../../theory/fretboard'
@@ -57,12 +57,30 @@ function Chip({
   )
 }
 
+/** A trilha abre a ferramenta pronta via link: /braco?modo=escala&tonica=7.
+ *  Parâmetro inválido é simplesmente ignorado — link velho nunca quebra a página. */
+const MODES: Mode[] = ['descobrir', 'escala', 'acorde', 'jogo']
+
 export function BracoPage() {
-  const [instrument, setInstrument] = useState<InstrumentId>('guitarra')
-  const [mode, setMode] = useState<Mode>('descobrir')
-  const [tonic, setTonic] = useState<PitchClass>(9) // Lá: a pentatônica de Lá é a 1ª que todo mundo aprende
-  const [scaleId, setScaleId] = useState<ScaleId>('pentatonica-menor')
-  const [chordQ, setChordQ] = useState<ChordQuality>('maior')
+  const [params] = useSearchParams()
+  const paramMode = MODES.find((m) => m === params.get('modo'))
+  const paramTonic = Number(params.get('tonica'))
+  const paramScale = (Object.keys(SCALES) as ScaleId[]).find((s) => s === params.get('escala'))
+  const paramInstrument = (['guitarra', 'baixo'] as InstrumentId[]).find(
+    (i) => i === params.get('instrumento'),
+  )
+
+  const [instrument, setInstrument] = useState<InstrumentId>(paramInstrument ?? 'guitarra')
+  const [mode, setMode] = useState<Mode>(paramMode ?? 'descobrir')
+  const [tonic, setTonic] = useState<PitchClass>(
+    Number.isInteger(paramTonic) && paramTonic >= 0 && paramTonic <= 11
+      ? (paramTonic as PitchClass)
+      : 9, // Lá: a pentatônica de Lá é a 1ª que todo mundo aprende
+  )
+  const [scaleId, setScaleId] = useState<ScaleId>(paramScale ?? 'pentatonica-menor')
+  const [chordQ, setChordQ] = useState<ChordQuality>(
+    CHORD_CHOICES.find((c) => c === params.get('acorde')) ?? 'maior',
+  )
   const [showAllNames, setShowAllNames] = useState(false)
   const [tapped, setTapped] = useState<{ string: number; fret: number } | null>(null)
   const [readout, setReadout] = useState<string | null>(null)

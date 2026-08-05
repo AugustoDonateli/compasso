@@ -333,7 +333,27 @@ export function HomePage() {
       <Marquee />
       <Barline measure={3} label="veja funcionando agora" />
       <FieldMeasure />
-      <Barline measure={4} label="o que vem por aí" />
+      <Barline measure={4} label="por onde começar" />
+      <section className="px-5 py-16 md:px-10 md:py-24">
+        <div className="border border-brass bg-brass/5 p-6 md:ml-[22%] md:max-w-2xl md:p-10">
+          <span className="type-label text-brass">a trilha</span>
+          <h2 className="type-display mt-3 text-3xl leading-tight md:text-5xl">
+            Não precisa decidir o que estudar
+          </h2>
+          <p className="mt-4 text-lg text-ink-2">
+            O caminho é um braço de instrumento, e cada lição é uma casa. Você só sobe —{' '}
+            <span className="text-brass">sempre tem um próximo passo</span>.
+          </p>
+          <Link
+            to="/trilha"
+            className="type-label mt-7 inline-block border border-brass bg-brass px-8 py-4 text-base"
+    style={{ color: 'var(--bg-base)' }}
+          >
+            começar a trilha
+          </Link>
+        </div>
+      </section>
+      <Barline measure={5} label="as ferramentas" />
       <Program />
       <Footer theme={theme} onToggle={() => setThemeState(toggleTheme())} />
     </div>

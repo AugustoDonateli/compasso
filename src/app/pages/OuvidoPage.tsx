@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   generate,
   isCorrect,
@@ -49,8 +49,14 @@ const KIND_HELP: Record<ExerciseKind, string> = {
 const SOUND_LABEL: Record<InstrumentSoundId, string> = {
   piano: 'piano',
   guitarra: 'guitarra',
+  violao: 'violão',
   baixo: 'baixo',
+  violino: 'violino',
 }
+
+/** todos os sons servem pra ouvir; o braço só pra instrumento com casas */
+const SOUNDS_ALL: InstrumentSoundId[] = ['piano', 'guitarra', 'violao', 'baixo', 'violino']
+const SOUNDS_FRETTED: InstrumentSoundId[] = ['guitarra', 'violao', 'baixo']
 
 function Segmented<T extends string>({
   options,
@@ -85,11 +91,23 @@ function Segmented<T extends string>({
   )
 }
 
+/** A trilha abre o treino pronto via link: /ouvido?treino=acorde&nivel=facil.
+ *  Parâmetro inválido é ignorado — link velho nunca quebra a página. */
+const KINDS: ExerciseKind[] = ['nota', 'intervalo', 'acorde', 'braco']
+
 export function OuvidoPage() {
-  const [kind, setKind] = useState<ExerciseKind>('acorde')
-  const [level, setLevel] = useState<Level>('facil')
-  const [sound, setSound] = useState<InstrumentSoundId>('piano')
-  const [question, setQuestion] = useState<Question>(() => generate('acorde', 'facil'))
+  const [params] = useSearchParams()
+  const initialKind = KINDS.find((k) => k === params.get('treino')) ?? 'acorde'
+  const initialLevel: Level = params.get('nivel') === 'completo' ? 'completo' : 'facil'
+  const initialSound =
+    (['piano', 'guitarra', 'baixo'] as InstrumentSoundId[]).find(
+      (s) => s === params.get('som'),
+    ) ?? 'piano'
+
+  const [kind, setKind] = useState<ExerciseKind>(initialKind)
+  const [level, setLevel] = useState<Level>(initialLevel)
+  const [sound, setSound] = useState<InstrumentSoundId>(initialSound)
+  const [question, setQuestion] = useState<Question>(() => generate(initialKind, initialLevel))
   const [answered, setAnswered] = useState<string | null>(null)
   const [score, setScore] = useState({ acertos: 0, tentativas: 0, xp: 0 })
   const [streak, setStreak] = useState(0)
@@ -260,10 +278,10 @@ export function OuvidoPage() {
             label="som"
             value={effectiveSound}
             onChange={changeSound}
-            options={(kind === 'braco'
-              ? (['guitarra', 'baixo'] as InstrumentSoundId[])
-              : (['piano', 'guitarra', 'baixo'] as InstrumentSoundId[])
-            ).map((s) => ({ id: s, label: SOUND_LABEL[s] }))}
+            options={(kind === 'braco' ? SOUNDS_FRETTED : SOUNDS_ALL).map((s) => ({
+              id: s,
+              label: SOUND_LABEL[s],
+            }))}
           />
           <p className="max-w-md text-sm text-[#6e655c]">{KIND_HELP[kind]}</p>
         </div>
@@ -318,7 +336,15 @@ export function OuvidoPage() {
                 braço pra corda, teclado pra nota, botões pro resto */}
             {kind === 'braco' ? (
               <Fretboard
-                tuning={TUNINGS[effectiveSound === 'baixo' ? 'baixo' : 'guitarra']}
+                tuning={
+                  TUNINGS[
+                    effectiveSound === 'baixo'
+                      ? 'baixo'
+                      : effectiveSound === 'violao'
+                        ? 'violao'
+                        : 'guitarra'
+                  ]
+                }
                 onPlay={(_s, _f, midi) => {
                   void playMidi(effectiveSound, midi)
                   if (!answered) answer(String(midiToPc(midi)))

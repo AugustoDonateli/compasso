@@ -4,6 +4,7 @@ import { HomePage } from './app/HomePage'
 import { BracoPage } from './app/pages/BracoPage'
 import { GroovePage } from './app/pages/GroovePage'
 import { OuvidoPage } from './app/pages/OuvidoPage'
+import { TrilhaPage } from './app/pages/TrilhaPage'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
 import { useLenisGsap } from './motion/useLenisGsap'
@@ -41,6 +42,7 @@ function App() {
         <Route path="/braco" element={<BracoPage />} />
         <Route path="/groove" element={<GroovePage />} />
         <Route path="/ouvido" element={<OuvidoPage />} />
+        <Route path="/trilha" element={<TrilhaPage />} />
       </Routes>
     </BrowserRouter>
   )

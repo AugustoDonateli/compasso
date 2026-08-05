@@ -129,7 +129,9 @@ export function isCorrect(q: Question, answerId: string): boolean {
 export const REGISTER_SHIFT: Record<string, number> = {
   piano: 0,
   guitarra: -12,
+  violao: -12,
   baixo: -24,
+  violino: 0, // corda mais grave é sol3 — dó central já cai bem no registro dele
 }
 
 /** Desloca a pergunta de oitava sem mexer na resposta (a classe de altura
