@@ -15,16 +15,26 @@ const DESKTOP = { dir: 'desktop', count: 121 }
 const MOBILE = { dir: 'mobile', count: 91 }
 const FRETS_IN_JOURNEY = 12
 
-/** Os atos da narrativa: [início, fim] no progresso da viagem */
+/** Os atos da narrativa: as dores reais de quem tenta aprender, em sequência */
 const BEATS = [
-  { from: 0.3, to: 0.52, align: 'left' as const, text: 'Toda a teoria musical num lugar só.' },
+  {
+    from: 0.3,
+    to: 0.52,
+    align: 'left' as const,
+    text: 'Você quer aprender.\nMas ninguém te diz por onde começar.',
+  },
   {
     from: 0.56,
     to: 0.78,
     align: 'right' as const,
-    text: 'Você não lê sobre música.\nVocê toca.',
+    text: 'E teoria longe do instrumento\nnão gruda.',
   },
-  { from: 0.84, to: 1.01, align: 'left' as const, text: 'O caminho começa aqui.' },
+  {
+    from: 0.84,
+    to: 1.01,
+    align: 'left' as const,
+    text: 'Então a gente fez um caminho.\nEle começa aqui.',
+  },
 ]
 
 /** Opacidade de um ato: entra, segura, sai — com rampas suaves */

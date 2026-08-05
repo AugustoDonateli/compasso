@@ -70,22 +70,72 @@ function Marquee() {
   )
 }
 
-/* ┃2┃ O manifesto — tipografia enorme revelada linha a linha */
-function Manifesto() {
+/* ┃2┃ As três dores — por que o Compasso existe.
+   Cada dor na voz de quem aprende (Fraunces, grande), cada resposta
+   como o site respondendo (corpo, com latão). Baseado em pesquisa real:
+   falta de ordem, teoria longe do instrumento, sobrecarga que desanima. */
+const DORES = [
+  {
+    marca: 'A',
+    dor: '“Eu quero aprender, mas não sei por onde começar.”',
+    resposta:
+      'Informação é o que não falta — ordem é o que falta. O Compasso é um caminho com sequência: você sempre sabe qual é o próximo passo.',
+  },
+  {
+    marca: 'B',
+    dor: '“Estudei a apostila, mas na hora de tocar não muda nada.”',
+    resposta:
+      'Teoria longe do instrumento não gruda. Aqui, cada conceito soa e se toca na hora — você aprende com os dedos, não só com os olhos.',
+  },
+  {
+    marca: 'C',
+    dor: '“É coisa demais. Eu desanimo antes de chegar em algum lugar.”',
+    resposta:
+      'Um passo de cada vez, no seu andamento. Vitórias pequenas e visíveis todo dia — porque é isso que faz alguém continuar, não talento.',
+  },
+]
+
+function Dor({ marca, dor, resposta, invert }: (typeof DORES)[0] & { invert: boolean }) {
   const ref = useRef<HTMLParagraphElement | null>(null)
   useLineReveal(ref)
   return (
-    <section className="staff-lines px-5 py-24 md:px-10 md:py-36" style={{ backgroundPosition: '0 3rem' }}>
-      <div className="md:ml-[22%] md:max-w-3xl">
-        <p ref={ref} className="type-display text-3xl leading-tight md:text-5xl">
-          A teoria está espalhada por mil vídeos e apostilas. Aqui ela mora num lugar só — e em vez
-          de ler sobre música, você toca nela.
-        </p>
-        <p className="type-label mt-10 text-ink-muted">
-          feito por um baterista aprendendo cordas — pra quem está no primeiro mês e não sabe o que
-          praticar hoje
-        </p>
+    <div className={`py-14 md:w-[72%] md:py-20 ${invert ? 'md:ml-auto' : ''}`}>
+      <div className="mb-5 flex items-center gap-4">
+        <span className="flex h-8 w-8 items-center justify-center border border-line font-mono text-sm text-ink-muted">
+          {marca}
+        </span>
+        <span className="h-px flex-1 bg-line" />
       </div>
+      <p ref={ref} className="type-display text-3xl leading-tight text-ink md:text-5xl">
+        {dor}
+      </p>
+      <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-2">
+        {resposta.split('. ').map((s, i, arr) => (
+          <span key={i}>
+            {i === arr.length - 1 ? (
+              <span className="text-brass">{s}</span>
+            ) : (
+              s + '. '
+            )}
+          </span>
+        ))}
+      </p>
+    </div>
+  )
+}
+
+function Manifesto() {
+  return (
+    <section
+      className="staff-lines px-5 py-16 md:px-10 md:py-24"
+      style={{ backgroundPosition: '0 3rem' }}
+    >
+      <p className="type-label mb-4 text-ink-muted">
+        três coisas fazem todo mundo desistir — o compasso existe contra as três
+      </p>
+      {DORES.map((d, i) => (
+        <Dor key={d.marca} {...d} invert={i % 2 === 1} />
+      ))}
     </section>
   )
 }
@@ -101,14 +151,23 @@ function FieldMeasure() {
   return (
     <section className="bg-[#161310] py-24 md:py-36">
       <div className="px-5 md:px-10">
+        <div className="mb-6 md:mb-8">
+          <span className="type-label text-[#6e655c]">prova, não promessa — toca aí embaixo</span>
+        </div>
         <div className="mb-16 flex flex-wrap items-end justify-between gap-6 md:mb-24">
-          <h2
-            ref={headRef}
-            className="type-display max-w-xl text-4xl leading-tight text-[#f2ede6] md:text-6xl"
-          >
-            Um compasso de Dó&nbsp;maior
-          </h2>
-          <span className="type-label text-[#6e655c]">toca aí · sete graus · ♩ = 92</span>
+          <div className="max-w-2xl">
+            <h2
+              ref={headRef}
+              className="type-display text-4xl leading-tight text-[#f2ede6] md:text-6xl"
+            >
+              Dentro de Dó maior moram sete&nbsp;acordes
+            </h2>
+            <p className="mt-6 max-w-xl text-lg text-[#a69c90]">
+              É a família de onde saem as músicas que você conhece. Clica em qualquer grau — isso é
+              o que o Compasso quer dizer com <span className="text-[#e0a34a]">tocar a teoria</span>.
+            </p>
+          </div>
+          <span className="type-label text-[#6e655c]">campo harmônico · ♩ = 92</span>
         </div>
 
         {/* o compasso: barra pesada abre, sete tempos, barra pesada fecha */}
@@ -148,27 +207,53 @@ function FieldMeasure() {
 
         <p className="type-label mt-10 text-[#6e655c]">
           {playing
-            ? `grau ${field[playing - 1].roman} · ${field[playing - 1].symbol} — a mesma família de acordes de metade das músicas que você conhece`
-            : 'cada tonalidade carrega sete acordes de família. clica num grau pra ouvir.'}
+            ? `você tocou o grau ${field[playing - 1].roman} (${field[playing - 1].symbol}) — junta ele com o V e o vi e você já toca metade do pop`
+            : 'sem cadastro, sem aula em vídeo, sem pdf. o instrumento é a página.'}
         </p>
       </div>
     </section>
   )
 }
 
-/* ┃4┃ O programa do concerto: o que vem */
+/* ┃4┃ O programa do concerto: o que vem — cada peça responde uma dor */
 const PROGRAM = [
-  { n: '01', title: 'O braço', desc: 'guitarra e baixo interativos, corda que vibra', tempo: 'em ensaio' },
-  { n: '02', title: 'Groove machine', desc: 'monte levadas, leia ritmo sem perceber', tempo: 'em ensaio' },
-  { n: '03', title: 'Desmontador', desc: 'a teoria por dentro das músicas que você ama', tempo: 'em ensaio' },
-  { n: '04', title: 'Ouvido', desc: 'reconheça notas e intervalos de verdade', tempo: 'em ensaio' },
+  {
+    n: '01',
+    title: 'O braço',
+    desc: 'a guitarra e o baixo na tela: toca a casa, ouve a nota, vê a escala acender',
+    tempo: 'em ensaio',
+  },
+  {
+    n: '02',
+    title: 'Groove machine',
+    desc: 'monta a levada e a partitura se escreve sozinha — leitura de ritmo sem sentir',
+    tempo: 'em ensaio',
+  },
+  {
+    n: '03',
+    title: 'Desmontador',
+    desc: 'abre uma música que você ama e vê a teoria trabalhando por dentro dela',
+    tempo: 'em ensaio',
+  },
+  {
+    n: '04',
+    title: 'Ouvido',
+    desc: 'treina reconhecer nota e intervalo de ouvido — o superpoder de todo músico',
+    tempo: 'em ensaio',
+  },
 ]
 
 function Program() {
   return (
     <section className="px-5 py-24 md:px-10 md:py-32">
+      <div className="mb-6 md:ml-[22%]">
+        <span className="type-label text-ink-muted">programa · construído em público</span>
+      </div>
       <div className="mb-14 md:ml-[22%]">
-        <span className="type-label text-ink-muted">programa</span>
+        <p className="max-w-lg text-lg text-ink-2">
+          O Compasso está sendo montado peça por peça, como um show sendo ensaiado. Isso aqui é o
+          que sobe ao palco em seguida:
+        </p>
       </div>
       <div>
         {PROGRAM.map((item) => (
@@ -194,7 +279,7 @@ function Footer({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
     <footer className="flex min-h-[70vh] flex-col justify-between overflow-hidden bg-[#12100e] px-5 pt-24 md:px-10">
       <div className="flex items-baseline justify-between">
-        <span className="type-label text-[#6e655c]">‖: do início :‖</span>
+        <span className="type-label text-[#6e655c]">‖: volta amanhã — sempre tem um próximo passo :‖</span>
         <button
           onClick={onToggle}
           className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]"
@@ -244,12 +329,12 @@ function App() {
     <div className="min-h-screen bg-base text-ink">
       <Preloader onDone={() => setReady(true)} />
       <Hero />
-      <Barline measure={2} label="por que existe" tempo="andante" />
+      <Barline measure={2} label="as três dores" tempo="andante" />
       <Manifesto />
       <Marquee />
-      <Barline measure={3} label="um gosto do instrumento" tempo="moderato · toca" />
+      <Barline measure={3} label="prova: toca a teoria" tempo="moderato" />
       <FieldMeasure />
-      <Barline measure={4} label="programa" tempo="allegro · em breve" />
+      <Barline measure={4} label="o que vem" tempo="allegro" />
       <Program />
       <Footer theme={theme} onToggle={() => setThemeState(toggleTheme())} />
     </div>
