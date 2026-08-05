@@ -8,7 +8,7 @@ import { midiToName } from '../theory/notes'
  *  e nada mais no site precisa mudar. Samples self-hosted (domínio público,
  *  tonejs-instruments), carregados sob demanda e cacheados. */
 
-export type InstrumentSoundId = 'guitarra' | 'baixo'
+export type InstrumentSoundId = 'guitarra' | 'baixo' | 'piano'
 
 /** nota -> arquivo (o Tone.Sampler preenche as notas faltantes por pitch-shift) */
 const SAMPLE_MAPS: Record<InstrumentSoundId, Record<string, string>> = {
@@ -17,6 +17,22 @@ const SAMPLE_MAPS: Record<InstrumentSoundId, Record<string, string>> = {
     E2: 'E2.mp3',
     'F#2': 'Fs2.mp3',
     A2: 'A2.mp3',
+    C3: 'C3.mp3',
+    'D#3': 'Ds3.mp3',
+    'F#3': 'Fs3.mp3',
+    A3: 'A3.mp3',
+    C4: 'C4.mp3',
+    'D#4': 'Ds4.mp3',
+    'F#4': 'Fs4.mp3',
+    A4: 'A4.mp3',
+    C5: 'C5.mp3',
+    'D#5': 'Ds5.mp3',
+    'F#5': 'Fs5.mp3',
+    A5: 'A5.mp3',
+    C6: 'C6.mp3',
+  },
+  // piano: tom limpo, o padrão pra treino de ouvido (intervalo fica nítido)
+  piano: {
     C3: 'C3.mp3',
     'D#3': 'Ds3.mp3',
     'F#3': 'Fs3.mp3',

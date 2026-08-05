@@ -231,7 +231,8 @@ const PROGRAM: Array<{ n: string; title: string; desc: string; to?: string }> = 
   {
     n: '04',
     title: 'Ouvido',
-    desc: 'treina reconhecer nota e intervalo de ouvido — o superpoder de todo músico',
+    desc: 'reconhece nota, intervalo e acorde só de ouvir — 5 minutos por dia',
+    to: '/ouvido',
   },
 ]
 
