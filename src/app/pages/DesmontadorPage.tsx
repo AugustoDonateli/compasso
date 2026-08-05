@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   duracaoEmTempos,
   MUSICAS,
   pcDoGrau,
   qualidadeDoGrau,
+  qualidadeDoTrecho,
   romano,
+  romanoDoTrecho,
   trechoNoTempo,
   type Musica,
 } from '../../content/musicas'
@@ -39,7 +41,8 @@ export function DesmontadorPage() {
   const trechoAtual = tocando ? trechoNoTempo(musica, tempo) : -1
   const grauAtual = trechoAtual >= 0 ? musica.progressao[trechoAtual].grau : null
   const pcAtual = grauAtual ? pcDoGrau(musica, grauAtual) : null
-  const qualidadeAtual = grauAtual ? qualidadeDoGrau(musica, grauAtual) : null
+  const qualidadeAtual =
+    trechoAtual >= 0 ? qualidadeDoTrecho(musica, musica.progressao[trechoAtual]) : null
 
   /** as notas do acorde que está soando — pra acender no braço */
   const notasDoAcorde = useMemo(
@@ -81,7 +84,7 @@ export function DesmontadorPage() {
       // dedilha o acorde só quando ele entra, não a cada tempo
       if (t % total === inicioDoTrecho) {
         const grau = musica.progressao[trecho].grau
-        const pcs = chordPcs(pcDoGrau(musica, grau), qualidadeDoGrau(musica, grau))
+        const pcs = chordPcs(pcDoGrau(musica, grau), qualidadeDoTrecho(musica, musica.progressao[trecho]))
         let prev = 48 + pcs[0]
         const midis = pcs.map((pc, i) => {
           if (i === 0) return prev
@@ -140,12 +143,13 @@ export function DesmontadorPage() {
         >
           Desmontador
         </h1>
-        <p className="mt-4 max-w-xl text-lg text-[#a69c90]">
-          As sequências de acordes por trás das músicas que você já conhece —{' '}
-          <span className="text-[#e0a34a]">com a teoria acendendo enquanto toca</span>.
+        <p className="mt-4 max-w-2xl text-lg text-[#a69c90]">
+          Músicas famosas abertas por dentro: a teoria que faz elas funcionarem, o que cada
+          instrumento está fazendo e{' '}
+          <span className="text-[#e0a34a]">a história de como nasceram</span>.
         </p>
 
-        {/* escolher a sequência */}
+        {/* escolher a música */}
         <div className="mt-8 grid gap-px bg-[#332d27] sm:grid-cols-2 lg:grid-cols-3">
           {MUSICAS.map((m) => (
             <button
@@ -155,10 +159,15 @@ export function DesmontadorPage() {
                 musica.id === m.id ? 'bg-[#e0a34a]/10' : 'bg-[#12100e] hover:bg-[#1b1815]'
               }`}
             >
-              <span className={`type-display block text-xl ${musica.id === m.id ? 'text-[#e0a34a]' : ''}`}>
+              <span
+                className={`type-display block text-xl ${musica.id === m.id ? 'text-[#e0a34a]' : ''}`}
+              >
                 {m.titulo}
               </span>
-              <span className="type-label mt-1 block text-[#8a8075]">{m.parte}</span>
+              <span className="type-label mt-1 block text-[#a69c90]">{m.artista}</span>
+              <span className="type-label mt-0.5 block text-[#8a8075]">
+                {m.ano} · {m.genero}
+              </span>
             </button>
           ))}
         </div>
@@ -199,16 +208,37 @@ export function DesmontadorPage() {
                   <span
                     className={`type-display block text-3xl ${ativo ? 'text-[#e0a34a]' : 'text-[#a69c90]'}`}
                   >
-                    {romano(musica, t.grau)}
+                    {romanoDoTrecho(musica, t)}
                   </span>
                   <span className="type-label mt-2 block text-[#8a8075]">
                     {noteSolfejo(spellPc(pc))}
-                    {qualidadeDoGrau(musica, t.grau) === 'menor' ? 'm' : ''}
+                    {qualidadeDoTrecho(musica, t) === 'menor' ? 'm' : ''}
                   </span>
+                  {/* acorde emprestado: é onde mora a mágica da música */}
+                  {t.emprestado && (
+                    <span className="type-label mt-2 block text-[#e0a34a]">emprestado</span>
+                  )}
                 </div>
               )
             })}
           </div>
+
+          {/* explica cada empréstimo, se houver */}
+          {musica.progressao.some((t) => t.emprestado) && (
+            <div className="mt-6 space-y-2 border-t border-[#332d27] pt-5">
+              {musica.progressao.map(
+                (t, i) =>
+                  t.emprestado && (
+                    <p key={i} className="text-[#a69c90]">
+                      <span className="type-label mr-2 text-[#e0a34a]">
+                        {romanoDoTrecho(musica, t)}
+                      </span>
+                      {t.emprestado.porque}
+                    </p>
+                  ),
+              )}
+            </div>
+          )}
         </div>
 
         {/* o braço acendendo com o acorde que está soando */}
@@ -226,11 +256,43 @@ export function DesmontadorPage() {
           </div>
         </div>
 
-        {/* a sacada — o que transforma tocar em entender */}
-        <div className="mt-8 border-l-2 border-[#e0a34a] pl-6">
-          <span className="type-label text-[#e0a34a]">a sacada</span>
-          <p className="mt-2 max-w-2xl text-lg leading-relaxed text-[#d5cec4]">{musica.sacada}</p>
-        </div>
+        {/* A HISTÓRIA — como a música nasceu de verdade */}
+        <section className="mt-14">
+          <span className="type-label text-[#8a8075]">como nasceu</span>
+          <h2 className="type-display mt-3 text-3xl md:text-4xl">A história</h2>
+          <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#d5cec4]">
+            {musica.historia}
+          </p>
+        </section>
+
+        {/* A TEORIA — o truque que faz funcionar */}
+        <section className="mt-12 border-l-2 border-[#e0a34a] pl-6">
+          <span className="type-label text-[#e0a34a]">o truque</span>
+          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[#d5cec4]">{musica.teoria}</p>
+        </section>
+
+        {/* AS CAMADAS — como os instrumentos se combinam */}
+        <section className="mt-14">
+          <span className="type-label text-[#8a8075]">o que cada instrumento faz</span>
+          <h2 className="type-display mt-3 text-3xl md:text-4xl">As camadas</h2>
+          <div className="mt-6">
+            {musica.camadas.map((c) => (
+              <div
+                key={c.instrumento}
+                className="grid gap-x-8 gap-y-1 border-t border-[#332d27] py-5 last:border-b md:grid-cols-[10rem_1fr]"
+              >
+                <span className="type-label text-[#e0a34a]">{c.instrumento}</span>
+                <p className="text-[#a69c90]">{c.faz}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* A LIÇÃO — o que você leva pro seu instrumento */}
+        <section className="mt-12 border border-[#332d27] bg-[#1b1815] p-6 md:p-8">
+          <span className="type-label text-[#e0a34a]">leve isso pro seu instrumento</span>
+          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[#f2ede6]">{musica.licao}</p>
+        </section>
 
         {/* o campo harmônico inteiro, com os graus usados destacados */}
         <div className="mt-10 border-t border-[#332d27] pt-8">
