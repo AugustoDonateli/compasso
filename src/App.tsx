@@ -6,6 +6,7 @@ import { GroovePage } from './app/pages/GroovePage'
 import { OuvidoPage } from './app/pages/OuvidoPage'
 import { TrilhaPage } from './app/pages/TrilhaPage'
 import { AfinadorPage } from './app/pages/AfinadorPage'
+import { Nav } from './app/Nav'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
 import { useLenisGsap } from './motion/useLenisGsap'
@@ -38,6 +39,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <Nav />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/braco" element={<BracoPage />} />

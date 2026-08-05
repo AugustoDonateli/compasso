@@ -5,30 +5,37 @@ import {
   licoesDe,
   progressoPct,
   proximaLicao,
+  TEORIA,
   TODAS_UNIDADES,
   trilhaDe,
+  type TrilhaInstrumento,
 } from './trilha'
-import type { InstrumentSoundId } from '../audio/instruments'
 
-const INSTRUMENTOS: InstrumentSoundId[] = ['guitarra', 'violao', 'baixo', 'piano', 'violino']
+const INSTRUMENTOS: TrilhaInstrumento[] = ['guitarra', 'violao', 'baixo', 'bateria', 'piano', 'violino']
 
-describe('estrutura da trilha', () => {
+describe('estrutura', () => {
   it('ids de unidade, lição e pergunta são únicos no site inteiro', () => {
-    const uIds = TODAS_UNIDADES.map((u) => u.id)
-    expect(new Set(uIds).size).toBe(uIds.length)
-    const lIds = TODAS_UNIDADES.flatMap((u) => u.licoes.map((l) => l.id))
-    expect(new Set(lIds).size).toBe(lIds.length)
-    const qIds = TODAS_UNIDADES.flatMap((u) => u.licoes.flatMap((l) => l.perguntas.map((p) => p.id)))
-    expect(new Set(qIds).size).toBe(qIds.length)
+    const u = TODAS_UNIDADES.map((x) => x.id)
+    expect(new Set(u).size).toBe(u.length)
+    const l = TODAS_UNIDADES.flatMap((x) => x.licoes.map((y) => y.id))
+    expect(new Set(l).size).toBe(l.length)
+    const q = TODAS_UNIDADES.flatMap((x) => x.licoes.flatMap((y) => y.perguntas.map((p) => p.id)))
+    expect(new Set(q).size).toBe(q.length)
   })
 
-  it('toda lição tem pelo menos duas perguntas', () => {
+  it('TODA lição ensina antes de perguntar', () => {
+    // a regra corrigida: perguntar sem ensinar é adivinhação. Se uma lição
+    // nova entrar sem abertura, este teste quebra de propósito.
     for (const u of TODAS_UNIDADES) {
-      for (const l of u.licoes) expect(l.perguntas.length).toBeGreaterThanOrEqual(2)
+      for (const l of u.licoes) {
+        expect(l.abertura, `lição "${l.id}" não tem abertura`).toBeDefined()
+        expect(l.abertura!.texto.length).toBeGreaterThan(120)
+        expect(l.abertura!.titulo.length).toBeGreaterThan(5)
+      }
     }
   })
 
-  it('TODA pergunta explica a resposta — o erro sempre vira aula', () => {
+  it('toda pergunta explica a resposta', () => {
     for (const u of TODAS_UNIDADES) {
       for (const l of u.licoes) {
         for (const p of l.perguntas) expect(p.explica.length).toBeGreaterThan(60)
@@ -36,27 +43,15 @@ describe('estrutura da trilha', () => {
     }
   })
 
-  it('alternativas: pelo menos 2, no máximo 4, com índice válido', () => {
+  it('alternativas: de 2 a 4, com índice válido e sem repetição', () => {
     for (const u of TODAS_UNIDADES) {
       for (const l of u.licoes) {
         for (const p of l.perguntas) {
           if (p.tipo === 'escolha' || p.tipo === 'ouvir') {
             expect(p.alternativas.length).toBeGreaterThanOrEqual(2)
-            // "três boas valem mais que quatro com enchimento"
             expect(p.alternativas.length).toBeLessThanOrEqual(4)
             expect(p.correta).toBeGreaterThanOrEqual(0)
             expect(p.correta).toBeLessThan(p.alternativas.length)
-          }
-        }
-      }
-    }
-  })
-
-  it('nenhuma alternativa se repete dentro da mesma pergunta', () => {
-    for (const u of TODAS_UNIDADES) {
-      for (const l of u.licoes) {
-        for (const p of l.perguntas) {
-          if (p.tipo === 'escolha' || p.tipo === 'ouvir') {
             expect(new Set(p.alternativas).size).toBe(p.alternativas.length)
           }
         }
@@ -64,15 +59,15 @@ describe('estrutura da trilha', () => {
     }
   })
 
-  it('a resposta certa não é sempre a primeira (evita chutar por padrão)', () => {
-    const indices = TODAS_UNIDADES.flatMap((u) =>
+  it('a resposta certa não é sempre a primeira', () => {
+    const idx = TODAS_UNIDADES.flatMap((u) =>
       u.licoes.flatMap((l) =>
         l.perguntas
           .filter((p) => p.tipo === 'escolha' || p.tipo === 'ouvir')
           .map((p) => (p as { correta: number }).correta),
       ),
     )
-    expect(new Set(indices).size).toBeGreaterThan(1)
+    expect(new Set(idx).size).toBeGreaterThan(1)
   })
 
   it('perguntas de montar têm alvo válido', () => {
@@ -90,122 +85,105 @@ describe('estrutura da trilha', () => {
       }
     }
   })
-})
 
-describe('galhos por instrumento', () => {
-  it('cada instrumento vê o SEU galho e nenhum outro', () => {
-    const esperado: Record<string, string> = {
-      guitarra: 'seu-instrumento-cordas',
-      violao: 'seu-instrumento-cordas',
-      baixo: 'seu-instrumento-baixo',
-      piano: 'seu-instrumento-piano',
-      violino: 'seu-instrumento-violino',
-    }
-    for (const i of INSTRUMENTOS) {
-      const ids = trilhaDe(i).map((u) => u.id)
-      expect(ids).toContain(esperado[i])
-      // nenhum galho de outro instrumento vazou
-      for (const [outro, id] of Object.entries(esperado)) {
-        if (esperado[i] !== id) expect(ids).not.toContain(outro === i ? '' : id)
-      }
-    }
-  })
-
-  it('todo instrumento começa pelo galho dele, antes da teoria', () => {
-    for (const i of INSTRUMENTOS) {
-      expect(trilhaDe(i)[0].n).toBe(0)
-      expect(trilhaDe(i)[0].paraInstrumentos).toContain(i)
-    }
-  })
-
-  it('todo instrumento vê a teoria universal', () => {
-    for (const i of INSTRUMENTOS) {
-      const ids = trilhaDe(i).map((u) => u.id)
-      expect(ids).toContain('som-tem-nome')
-      expect(ids).toContain('o-pulso')
-    }
-  })
-
-  it('todo instrumento tem trilha navegável de tamanho decente', () => {
-    for (const i of INSTRUMENTOS) {
-      expect(licoesDe(i).length).toBeGreaterThanOrEqual(7)
-    }
-  })
-
-  it('só instrumento de corda usa perguntas de braço', () => {
-    const comBraco: InstrumentSoundId[] = ['guitarra', 'violao', 'baixo']
-    for (const i of INSTRUMENTOS) {
-      const temAchar = trilhaDe(i).some((u) =>
-        u.licoes.some((l) => l.perguntas.some((p) => p.tipo === 'achar')),
-      )
-      if (!comBraco.includes(i)) expect(temAchar).toBe(false)
-    }
-  })
-
-  it('todo instrumento afinado tem pelo menos uma pergunta tocada no microfone', () => {
-    // é a vantagem que o site tem sobre vídeo: bateria fica de fora porque
-    // percussão não tem altura definida
-    for (const i of INSTRUMENTOS) {
-      const temTocar = trilhaDe(i).some((u) =>
-        u.licoes.some((l) => l.perguntas.some((p) => p.tipo === 'tocar')),
-      )
-      expect(temTocar).toBe(true)
-    }
-  })
-
-  it('toda pergunta de microfone tem saída pela tela — ninguém fica preso', () => {
+  it('toda pergunta de microfone tem saída pela tela', () => {
     for (const u of TODAS_UNIDADES) {
       for (const l of u.licoes) {
         for (const p of l.perguntas) {
-          if (p.tipo === 'tocar') {
-            expect(['braco', 'teclado']).toContain(p.alternativaNaTela)
-          }
+          if (p.tipo === 'tocar') expect(['braco', 'teclado']).toContain(p.alternativaNaTela)
         }
       }
     }
   })
+})
 
-  it('aberturas existem, mas só onde o conceito tem muitas peças', () => {
-    const comAbertura = TODAS_UNIDADES.flatMap((u) => u.licoes).filter((l) => l.abertura)
-    const total = TODAS_UNIDADES.flatMap((u) => u.licoes).length
-    expect(comAbertura.length).toBeGreaterThan(0)
-    // se toda lição tivesse abertura, perderíamos o efeito de pré-teste
-    expect(comAbertura.length).toBeLessThan(total / 2)
-    for (const l of comAbertura) {
-      expect(l.abertura!.texto.length).toBeGreaterThan(120)
+describe('as duas trilhas são independentes', () => {
+  it('a trilha do instrumento NÃO tem teoria musical abstrata', () => {
+    // era o problema: o baterista levava 9 lições de altura que não usa
+    const idsDeTeoria = TEORIA.flatMap((u) => u.licoes.map((l) => l.id))
+    for (const i of INSTRUMENTOS) {
+      const ids = licoesDe(i, 'instrumento').map((x) => x.licao.id)
+      for (const t of idsDeTeoria) expect(ids).not.toContain(t)
+    }
+  })
+
+  it('a trilha de teoria é a mesma pra qualquer instrumento', () => {
+    const base = licoesDe('guitarra', 'teoria').map((x) => x.licao.id)
+    for (const i of INSTRUMENTOS) {
+      expect(licoesDe(i, 'teoria').map((x) => x.licao.id)).toEqual(base)
+    }
+  })
+
+  it('bateria não recebe nenhuma pergunta de altura', () => {
+    const perguntas = licoesDe('bateria', 'instrumento').flatMap((x) => x.licao.perguntas)
+    expect(perguntas.length).toBeGreaterThan(0)
+    for (const p of perguntas) {
+      expect(['ouvir', 'montar', 'achar', 'tocar']).not.toContain(p.tipo)
+    }
+  })
+
+  it('cada instrumento vê só o galho dele', () => {
+    const marcador: Record<string, string> = {
+      guitarra: 'g-cordas',
+      violao: 'g-cordas',
+      baixo: 'b-cordas',
+      bateria: 'd-pecas',
+      piano: 'p-dedos',
+      violino: 'v-cordas',
+    }
+    for (const i of INSTRUMENTOS) {
+      const ids = licoesDe(i, 'instrumento').map((x) => x.licao.id)
+      expect(ids).toContain(marcador[i])
+      for (const [outro, id] of Object.entries(marcador)) {
+        if (marcador[i] !== id && outro !== i) expect(ids).not.toContain(id)
+      }
+    }
+  })
+
+  it('todo instrumento tem trilha própria com tamanho decente', () => {
+    for (const i of INSTRUMENTOS) {
+      expect(licoesDe(i, 'instrumento').length).toBeGreaterThanOrEqual(4)
+      expect(trilhaDe(i, 'instrumento').length).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('só instrumento com casas usa pergunta de braço', () => {
+    const comBraco = ['guitarra', 'violao', 'baixo']
+    for (const i of INSTRUMENTOS) {
+      const temAchar = licoesDe(i, 'instrumento').some((x) =>
+        x.licao.perguntas.some((p) => p.tipo === 'achar'),
+      )
+      if (!comBraco.includes(i)) expect(temAchar).toBe(false)
     }
   })
 })
 
 describe('progressão', () => {
-  const ids = licoesDe('guitarra').map((x) => x.licao.id)
+  const ids = licoesDe('guitarra', 'instrumento').map((x) => x.licao.id)
 
   it('próxima lição é a primeira não concluída', () => {
-    expect(proximaLicao([], 'guitarra')?.licao.id).toBe(ids[0])
-    expect(proximaLicao([ids[0]], 'guitarra')?.licao.id).toBe(ids[1])
-    // buraco no meio: volta o que falta, não o seguinte ao último feito
-    expect(proximaLicao([ids[0], ids[2]], 'guitarra')?.licao.id).toBe(ids[1])
+    expect(proximaLicao([], 'guitarra', 'instrumento')?.licao.id).toBe(ids[0])
+    expect(proximaLicao([ids[0]], 'guitarra', 'instrumento')?.licao.id).toBe(ids[1])
+    expect(proximaLicao([ids[0], ids[2]], 'guitarra', 'instrumento')?.licao.id).toBe(ids[1])
   })
 
-  it('trilha inteira concluída não tem próxima', () => {
-    expect(proximaLicao(ids, 'guitarra')).toBeNull()
+  it('trilha concluída não tem próxima', () => {
+    expect(proximaLicao(ids, 'guitarra', 'instrumento')).toBeNull()
   })
 
-  it('primeira lição já nasce aberta; a seguinte só depois dela', () => {
-    expect(licaoDesbloqueada(ids[0], [], 'guitarra')).toBe(true)
-    expect(licaoDesbloqueada(ids[1], [], 'guitarra')).toBe(false)
-    expect(licaoDesbloqueada(ids[1], [ids[0]], 'guitarra')).toBe(true)
+  it('desbloqueio é sequencial dentro da trilha', () => {
+    expect(licaoDesbloqueada(ids[0], [], 'guitarra', 'instrumento')).toBe(true)
+    expect(licaoDesbloqueada(ids[1], [], 'guitarra', 'instrumento')).toBe(false)
+    expect(licaoDesbloqueada(ids[1], [ids[0]], 'guitarra', 'instrumento')).toBe(true)
   })
 
-  it('percentual conta só as lições do instrumento escolhido', () => {
-    expect(progressoPct([], 'guitarra')).toBe(0)
-    expect(progressoPct(ids, 'guitarra')).toBe(100)
-    // lições de corda não contam pro pianista
-    expect(progressoPct(['seis-cordas'], 'piano')).toBe(0)
+  it('progresso de uma trilha não conta na outra', () => {
+    expect(progressoPct(ids, 'guitarra', 'instrumento')).toBe(100)
+    expect(progressoPct(ids, 'guitarra', 'teoria')).toBe(0)
   })
 
-  it('busca por id devolve a unidade junto', () => {
-    expect(licaoPorId(ids[0], 'guitarra')?.unidade.n).toBe(0)
-    expect(licaoPorId('nada', 'guitarra')).toBeUndefined()
+  it('busca por id respeita a trilha', () => {
+    expect(licaoPorId(ids[0], 'guitarra', 'instrumento')).toBeDefined()
+    expect(licaoPorId(ids[0], 'guitarra', 'teoria')).toBeUndefined()
   })
 })

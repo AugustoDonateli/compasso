@@ -3,6 +3,7 @@ import type { Licao, Pergunta } from '../../content/trilha'
 import { Keyboard } from '../../tools/keyboard/Keyboard'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
 import { TocarNota } from './TocarNota'
+import { Diagrama } from './Diagrama'
 import { TUNINGS } from '../../theory/fretboard'
 import { midiToPc, noteSolfejo, spellPc, type PitchClass } from '../../theory/notes'
 import { playMidi, type InstrumentSoundId } from '../../audio/instruments'
@@ -165,6 +166,8 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
             <p className="mt-8 text-xl leading-relaxed text-[#d5cec4] md:text-2xl">
               {licao.abertura.texto}
             </p>
+            {/* pra anatomia e posição, desenho ensina mais que texto */}
+            {licao.abertura.diagrama && <Diagrama id={licao.abertura.diagrama} />}
             <button
               onClick={() => setLendoAbertura(false)}
               className="type-label mt-12 w-full border-2 border-[#e0a34a] bg-[#e0a34a] px-10 py-6 text-[#12100e] transition-transform hover:-translate-y-0.5 md:w-auto"

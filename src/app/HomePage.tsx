@@ -1,7 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Hero } from './Hero'
+import { Painel } from './Painel'
 import { Preloader } from './Preloader'
+import { getProgress } from '../progress'
+import type { UserProgress } from '../storage'
+import type { TrilhaInstrumento } from '../content/trilha'
 import { getTheme, toggleTheme, type Theme } from '../design/theme'
 import { useLineReveal } from '../motion/useLineReveal'
 import { ensureAudio } from '../audio/engine'
@@ -326,9 +330,42 @@ function Footer({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   )
 }
 
+/** Quem já usou o site tem progresso salvo — é assim que dá pra saber que a
+ *  pessoa não precisa mais da apresentação. */
+function jaConhece(p: UserProgress | null): boolean {
+  return !!p && (p.completed.length > 0 || p.xp > 0)
+}
+
 export function HomePage() {
   const [theme, setThemeState] = useState<Theme>(getTheme)
   const [, setReady] = useState(false)
+  const [progresso, setProgresso] = useState<UserProgress | null>(null)
+  const [carregou, setCarregou] = useState(false)
+  const [forcarLanding, setForcarLanding] = useState(false)
+
+  useEffect(() => {
+    void getProgress().then((p) => {
+      setProgresso(p)
+      setCarregou(true)
+    })
+  }, [])
+
+  const instrumento = (localStorage.getItem('compasso.instrumento') ??
+    'guitarra') as TrilhaInstrumento
+
+  // enquanto não sabe quem é, não pisca nem uma coisa nem outra
+  if (!carregou) return <div className="min-h-screen bg-base" />
+
+  if (jaConhece(progresso) && !forcarLanding) {
+    return (
+      <Painel
+        progresso={progresso!}
+        instrumento={instrumento}
+        tipo={(localStorage.getItem('compasso.tipoTrilha') as 'instrumento' | 'teoria') ?? 'instrumento'}
+        onVerLanding={() => setForcarLanding(true)}
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-base text-ink">

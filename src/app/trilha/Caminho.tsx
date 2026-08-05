@@ -3,6 +3,7 @@ import { gsap } from '../../motion/useLenisGsap'
 import {
   licaoDesbloqueada,
   licoesDe,
+  type TipoTrilha,
   type TrilhaInstrumento,
   type Unidade,
 } from '../../content/trilha'
@@ -28,13 +29,14 @@ function fretY(n: number): number {
 
 interface Props {
   instrumento: TrilhaInstrumento
+  tipo: TipoTrilha
   concluidas: string[]
   atualId: string | null
   onEscolher: (licaoId: string) => void
   onVerGuia: (u: Unidade) => void
 }
 
-export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGuia }: Props) {
+export function Caminho({ instrumento, tipo, concluidas, atualId, onEscolher, onVerGuia }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null)
 
   useEffect(() => {
@@ -52,9 +54,9 @@ export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGui
     return () => {
       tween.kill()
     }
-  }, [instrumento])
+  }, [instrumento, tipo])
 
-  const lista = licoesDe(instrumento)
+  const lista = licoesDe(instrumento, tipo)
   const nodes = lista.map(({ unidade, licao }, i) => ({
     unidade,
     licao,
@@ -63,7 +65,7 @@ export function Caminho({ instrumento, concluidas, atualId, onEscolher, onVerGui
     fimDeUnidade: unidade.licoes[unidade.licoes.length - 1].id === licao.id,
     inicioDeUnidade: unidade.licoes[0].id === licao.id,
     feita: concluidas.includes(licao.id),
-    aberta: licaoDesbloqueada(licao.id, concluidas, instrumento),
+    aberta: licaoDesbloqueada(licao.id, concluidas, instrumento, tipo),
     atual: licao.id === atualId,
   }))
 

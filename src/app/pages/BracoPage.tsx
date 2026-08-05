@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
 import { useAcheANota } from '../../tools/fretboard/AcheANota'
 import { TUNINGS, midiAt, positionsOf, type InstrumentId } from '../../theory/fretboard'
@@ -139,11 +139,9 @@ export function BracoPage() {
   const contextual = mode === 'escala' || mode === 'acorde'
 
   return (
-    <div className="min-h-screen bg-[#171310] text-[#f2ede6]">
+    <div className="min-h-screen pt-14 bg-[#171310] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
-        <Link to="/" className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]">
-          ← compasso
-        </Link>
+        <span />
         <span className="type-label text-[#6e655c]">ferramenta 01</span>
       </header>
 

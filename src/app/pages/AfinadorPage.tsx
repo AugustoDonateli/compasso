@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+﻿import { useMemo, useState } from 'react'
 import { useMicrophone } from '../../audio/useMicrophone'
 import { estaAfinado, notaParaFreq } from '../../audio/pitch'
 import { TUNINGS, type InstrumentId } from '../../theory/fretboard'
@@ -47,11 +46,9 @@ export function AfinadorPage() {
   const cor = !leitura ? '#8a8075' : afinado ? '#6e8f5a' : '#e0a34a'
 
   return (
-    <div className="min-h-screen bg-[#12100e] text-[#f2ede6]">
+    <div className="min-h-screen pt-14 bg-[#12100e] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 py-5 md:px-10">
-        <Link to="/" className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]">
-          ← compasso
-        </Link>
+        <span />
         <span className="type-label text-[#8a8075]">ferramenta 05</span>
       </header>
 

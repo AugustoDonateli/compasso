@@ -7,6 +7,7 @@ import {
   licoesDe,
   progressoPct,
   proximaLicao,
+  type TipoTrilha,
   type TrilhaInstrumento,
   type Unidade,
 } from '../../content/trilha'
@@ -34,6 +35,7 @@ const INSTRUMENTOS: Array<{ id: TrilhaInstrumento; nome: string }> = [
 ]
 
 const SOM_KEY = 'compasso.instrumento'
+const TIPO_KEY = 'compasso.tipoTrilha'
 
 /** Bateria não tem notas afinadas: nas perguntas de teoria que pedem nota,
  *  o baterista ouve piano. Todo o resto da trilha continua sendo dele. */
@@ -51,6 +53,15 @@ export function TrilhaPage() {
     const salvo = localStorage.getItem(SOM_KEY) as TrilhaInstrumento | null
     return INSTRUMENTOS.some((x) => x.id === salvo) ? salvo! : 'guitarra'
   })
+  /** duas trilhas paralelas: o instrumento e a teoria. Um baterista que só
+   *  quer bateria nunca esbarra em nota; quem quer harmonia tem o caminho. */
+  const [tipo, setTipo] = useState<TipoTrilha>(
+    () => (localStorage.getItem(TIPO_KEY) as TipoTrilha | null) ?? 'instrumento',
+  )
+
+  useEffect(() => {
+    localStorage.setItem(TIPO_KEY, tipo)
+  }, [tipo])
 
   useEffect(() => {
     void getProgress().then(setProg)
@@ -63,8 +74,8 @@ export function TrilhaPage() {
   }, [som])
 
   const concluidas = prog?.completed ?? []
-  const proxima = proximaLicao(concluidas, som)
-  const totalLicoes = licoesDe(som).length
+  const proxima = proximaLicao(concluidas, som, tipo)
+  const totalLicoes = licoesDe(som, tipo).length
 
   const concluir = useCallback(
     async (acertos: number, total: number) => {
@@ -79,7 +90,7 @@ export function TrilhaPage() {
   )
 
   if (emAula) {
-    const alvo = licaoPorId(emAula, som)
+    const alvo = licaoPorId(emAula, som, tipo)
     if (alvo) {
       return (
         <Sessao
@@ -92,16 +103,14 @@ export function TrilhaPage() {
     }
   }
 
-  const pct = progressoPct(concluidas, som)
+  const pct = progressoPct(concluidas, som, tipo)
   const nomeInstrumento = INSTRUMENTOS.find((x) => x.id === som)?.nome ?? som
 
   return (
-    <div className="min-h-screen bg-[#12100e] text-[#f2ede6]">
+    <div className="min-h-screen pt-14 bg-[#12100e] text-[#f2ede6]">
       {/* uma linha só de contexto — nada de grade de placar competindo */}
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#221e1a] px-5 py-5 md:px-10">
-        <Link to="/" className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]">
-          ← compasso
-        </Link>
+        <span />
         <div className="flex items-center gap-6">
           <span className="type-label text-[#a69c90]">
             <span className="text-[#f2ede6]">{pct}%</span> da trilha
@@ -142,6 +151,30 @@ export function TrilhaPage() {
           ))}
         </div>
       )}
+
+      {/* qual trilha: o seu instrumento ou a teoria musical */}
+      <div className="flex justify-center border-b border-[#221e1a] px-5 py-4 md:px-10">
+        <div className="flex border border-[#332d27]">
+          {(
+            [
+              { id: 'instrumento' as TipoTrilha, nome: nomeInstrumento },
+              { id: 'teoria' as TipoTrilha, nome: 'teoria musical' },
+            ]
+          ).map((t, k) => (
+            <button
+              key={t.id}
+              onClick={() => setTipo(t.id)}
+              className={`type-label px-6 py-3 transition-colors ${k > 0 ? 'border-l border-[#332d27]' : ''} ${
+                tipo === t.id
+                  ? 'bg-[#e0a34a] text-[#12100e]'
+                  : 'text-[#a69c90] hover:bg-[#f2ede6]/5 hover:text-[#f2ede6]'
+              }`}
+            >
+              {t.nome}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <main className="mx-auto max-w-6xl px-5 py-10 md:px-10 md:py-16">
         {/* resultado da última lição, se houver */}
@@ -218,6 +251,7 @@ export function TrilhaPage() {
           <div className="order-2 lg:order-1">
             <Caminho
               instrumento={som}
+              tipo={tipo}
               concluidas={concluidas}
               atualId={proxima?.licao.id ?? null}
               onEscolher={setEmAula}

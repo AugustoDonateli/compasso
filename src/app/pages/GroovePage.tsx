@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import { getDrumKit, preloadDrumKit, type DrumPiece } from '../../audio/instruments'
 import { setBpm, startSixteenthLoop } from '../../audio/transport'
 import { Notation } from '../../tools/groove/Notation'
@@ -74,11 +73,9 @@ export function GroovePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#171310] text-[#f2ede6]">
+    <div className="min-h-screen pt-14 bg-[#171310] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
-        <Link to="/" className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]">
-          ← compasso
-        </Link>
+        <span />
         <span className="type-label text-[#6e655c]">ferramenta 02</span>
       </header>
 
