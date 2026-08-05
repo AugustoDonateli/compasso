@@ -7,10 +7,15 @@ import {
   licoesDe,
   progressoPct,
   proximaLicao,
+  type TrilhaInstrumento,
   type Unidade,
 } from '../../content/trilha'
 import { award, getProgress, setStepDone } from '../../progress'
-import { preloadInstrument, type InstrumentSoundId } from '../../audio/instruments'
+import {
+  preloadDrumKit,
+  preloadInstrument,
+  type InstrumentSoundId,
+} from '../../audio/instruments'
 import type { UserProgress } from '../../storage'
 
 /* ┃trilha┃ O caminho.
@@ -19,15 +24,22 @@ import type { UserProgress } from '../../storage'
    O guia da unidade só aparece quando você toca nela — revelação progressiva.
    Tudo grande: o site tem que passar confiança, não densidade. */
 
-const INSTRUMENTOS: Array<{ id: InstrumentSoundId; nome: string }> = [
+const INSTRUMENTOS: Array<{ id: TrilhaInstrumento; nome: string }> = [
   { id: 'guitarra', nome: 'guitarra' },
   { id: 'violao', nome: 'violão' },
   { id: 'baixo', nome: 'baixo' },
+  { id: 'bateria', nome: 'bateria' },
   { id: 'piano', nome: 'piano' },
   { id: 'violino', nome: 'violino' },
 ]
 
 const SOM_KEY = 'compasso.instrumento'
+
+/** Bateria não tem notas afinadas: nas perguntas de teoria que pedem nota,
+ *  o baterista ouve piano. Todo o resto da trilha continua sendo dele. */
+function somDeNotas(i: TrilhaInstrumento): InstrumentSoundId {
+  return i === 'bateria' ? 'piano' : i
+}
 
 export function TrilhaPage() {
   const [prog, setProg] = useState<UserProgress | null>(null)
@@ -35,8 +47,8 @@ export function TrilhaPage() {
   const [resultado, setResultado] = useState<{ acertos: number; total: number } | null>(null)
   const [guia, setGuia] = useState<Unidade | null>(null)
   const [trocandoSom, setTrocandoSom] = useState(false)
-  const [som, setSom] = useState<InstrumentSoundId>(() => {
-    const salvo = localStorage.getItem(SOM_KEY) as InstrumentSoundId | null
+  const [som, setSom] = useState<TrilhaInstrumento>(() => {
+    const salvo = localStorage.getItem(SOM_KEY) as TrilhaInstrumento | null
     return INSTRUMENTOS.some((x) => x.id === salvo) ? salvo! : 'guitarra'
   })
 
@@ -46,7 +58,8 @@ export function TrilhaPage() {
 
   useEffect(() => {
     localStorage.setItem(SOM_KEY, som)
-    preloadInstrument(som)
+    preloadInstrument(somDeNotas(som))
+    if (som === 'bateria') preloadDrumKit()
   }, [som])
 
   const concluidas = prog?.completed ?? []
@@ -71,7 +84,7 @@ export function TrilhaPage() {
       return (
         <Sessao
           licao={alvo.licao}
-          som={som}
+          som={somDeNotas(som)}
           onConcluir={(a, t) => void concluir(a, t)}
           onSair={() => setEmAula(null)}
         />

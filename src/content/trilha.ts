@@ -1,5 +1,11 @@
-import type { PitchClass } from '../theory/notes'
+﻿import type { PitchClass } from '../theory/notes'
 import type { InstrumentSoundId } from '../audio/instruments'
+
+/** Quem a pessoa É na trilha — diferente de qual SOM o site toca.
+ *  Bateria não tem notas afinadas, então não existe como sampler de altura;
+ *  mas existe como identidade de quem estuda. Nas lições de teoria que pedem
+ *  nota, o baterista ouve piano. */
+export type TrilhaInstrumento = InstrumentSoundId | 'bateria'
 
 /** A trilha do Compasso — o caminho que responde "o que eu pratico hoje?".
  *
@@ -98,12 +104,12 @@ export interface Unidade {
   /** o guia da unidade: o que você sai sabendo, numa frase */
   guia: string
   /** vazio = teoria universal. Senão, só aparece pra quem toca esses instrumentos. */
-  paraInstrumentos?: InstrumentSoundId[]
+  paraInstrumentos?: TrilhaInstrumento[]
   licoes: Licao[]
 }
 
 const C4 = 60
-const CORDAS: InstrumentSoundId[] = ['guitarra', 'violao']
+const CORDAS: TrilhaInstrumento[] = ['guitarra', 'violao']
 
 /* ============================================================
    U0 — SEU INSTRUMENTO (guitarra e violão)
@@ -559,34 +565,565 @@ const U3_CORDAS: Unidade = {
   ],
 }
 
+/* ============================================================
+   BAIXO — mesmas cordas da guitarra, papel completamente outro
+   ============================================================ */
+
+const U0_BAIXO: Unidade = {
+  id: 'seu-instrumento-baixo',
+  n: 0,
+  titulo: 'Seu instrumento',
+  guia: 'Sair daqui sabendo as quatro cordas, entendendo por que o baixo existe numa banda e por que tocar menos é tocar melhor.',
+  paraInstrumentos: ['baixo'],
+  licoes: [
+    {
+      id: 'quatro-cordas',
+      titulo: 'As quatro cordas',
+      perguntas: [
+        {
+          id: 'b0l1q1',
+          tipo: 'escolha',
+          enunciado: 'Da mais grossa pra mais fina, quais são as cordas do baixo?',
+          alternativas: ['mi · lá · ré · sol', 'sol · ré · lá · mi', 'mi · lá · ré · sol · si'],
+          correta: 0,
+          explica:
+            'Mi, lá, ré, sol — exatamente as quatro cordas mais graves da guitarra, só que uma oitava abaixo. Quem já mexeu em guitarra já sabe metade do braço do baixo.',
+        },
+        {
+          id: 'b0l1q2',
+          tipo: 'achar',
+          enunciado: 'Toque a 4ª corda solta — o mi grave.',
+          alvo: 4,
+          posicao: { corda: 0, casa: 0 },
+          explica:
+            'Essa é a nota mais grave do baixo padrão. É ela que sustenta a banda inteira: se o baixo some, a música fica sem chão.',
+        },
+        {
+          id: 'b0l1q3',
+          tipo: 'escolha',
+          enunciado: 'Por que o baixo tem cordas mais grossas e um braço maior?',
+          alternativas: [
+            'pra aguentar mais volume no amplificador',
+            'porque corda grossa e longa vibra mais devagar, e isso é o som grave',
+            'porque é tocado com os dedos e não com palheta',
+          ],
+          correta: 1,
+          explica:
+            'Grave é vibração lenta. Corda mais grossa e mais comprida vibra mais devagar — é a mesma física da tarraxa, só que no tamanho do instrumento. Nada a ver com volume.',
+        },
+      ],
+    },
+    {
+      id: 'papel-do-baixo',
+      titulo: 'O que o baixo faz',
+      abertura: {
+        titulo: 'A ponte entre a harmonia e o ritmo',
+        texto:
+          'O baixo é o único instrumento que fica com um pé em cada lado: ele toca as notas da harmonia, mas no ritmo da bateria. Quando o baixo e o bumbo caem juntos, a banda soa unida. Quando eles brigam, tudo soa desmontado — mesmo com todos tocando as notas certas.',
+      },
+      perguntas: [
+        {
+          id: 'b0l2q1',
+          tipo: 'escolha',
+          enunciado: 'Numa banda, com quem o baixo precisa estar mais colado?',
+          // engano real: baixista novato acompanha a guitarra e ignora o bumbo
+          alternativas: [
+            'com a guitarra, que faz a harmonia',
+            'com o bumbo da bateria',
+            'com o vocal, que carrega a melodia',
+          ],
+          correta: 1,
+          explica:
+            'Com o bumbo. Esse é o erro clássico de quem começa: seguir a guitarra e ignorar a bateria. Baixo e bumbo caindo juntos é o que faz a banda soar como uma coisa só.',
+        },
+        {
+          id: 'b0l2q2',
+          tipo: 'escolha',
+          enunciado: 'Você já sabe várias notas. Numa música, o que costuma soar melhor?',
+          // engano real: overplaying, tocar rápido pra mostrar serviço
+          alternativas: [
+            'encher com o máximo de notas que der',
+            'poucas notas, sempre no lugar certo do tempo',
+            'copiar exatamente o que a guitarra está fazendo',
+          ],
+          correta: 1,
+          explica:
+            'Menos é mais, de verdade. O trabalho do baixo é dar um chão em que os outros se apoiam — e chão cheio de buraco não sustenta ninguém. Tocar rápido impressiona outro baixista; tocar no lugar certo impressiona a banda inteira.',
+        },
+        {
+          id: 'b0l2q3',
+          tipo: 'tempo',
+          enunciado: 'Trave com o pulso: 8 batidas a 84 bpm.',
+          bpm: 84,
+          batidas: 8,
+          toleranciaMs: 150,
+          explica:
+            'Constância é a habilidade mais valiosa do baixista. Antes de qualquer escala, é isso que faz alguém te chamar pra tocar de novo.',
+        },
+      ],
+    },
+  ],
+}
+
+/* ============================================================
+   BATERIA — o instrumento do Augusto, e onde o site tem vantagem
+   ============================================================ */
+
+const U0_BATERIA: Unidade = {
+  id: 'seu-instrumento-bateria',
+  n: 0,
+  titulo: 'Seu instrumento',
+  guia: 'Sair daqui conhecendo as peças que fazem uma levada, com a pegada solta e contando alto sem se perder.',
+  paraInstrumentos: ['bateria'],
+  licoes: [
+    {
+      id: 'partes-do-kit',
+      titulo: 'As peças que importam',
+      perguntas: [
+        {
+          id: 'd0l1q1',
+          tipo: 'escolha',
+          enunciado: 'Quais três peças sustentam quase toda levada de música popular?',
+          alternativas: [
+            'bumbo, caixa e chimbal',
+            'os três tomes',
+            'caixa, prato de ataque e prato de condução',
+          ],
+          correta: 0,
+          explica:
+            'Bumbo, caixa e chimbal. Tomes e pratos entram como tempero e viradas — mas o groove que faz a cabeça balançar sai desses três. Dá pra tocar milhares de músicas só com eles.',
+        },
+        {
+          id: 'd0l1q2',
+          tipo: 'escolha',
+          enunciado: 'Você ainda não tem uma bateria. Dá pra estudar de verdade?',
+          alternativas: [
+            'não, sem o kit completo não tem como',
+            'sim: um pad de estudo e um par de baquetas resolvem os primeiros meses',
+            'só se você tiver pelo menos caixa e bumbo',
+          ],
+          correta: 1,
+          explica:
+            'Pad e baquetas bastam pra muita coisa. Pegada, rudimento, constância e leitura — tudo isso se treina sem kit. É o instrumento mais barato de começar a estudar e o mais caro de comprar.',
+        },
+      ],
+    },
+    {
+      id: 'pegada',
+      titulo: 'A pegada',
+      abertura: {
+        titulo: 'A baqueta trabalha, não você',
+        texto:
+          'A baqueta quica sozinha quando você deixa. Segura com o polegar e o indicador fazendo um ponto de apoio, e os outros dedos só acompanhando — solto o bastante pra ela voltar. Quem aperta forte demais mata o quique, passa a mover o braço inteiro em vez do pulso, cansa em dois minutos e ainda tira um som sufocado do instrumento.',
+      },
+      perguntas: [
+        {
+          id: 'd0l2q1',
+          tipo: 'escolha',
+          enunciado: 'Qual é o erro nº1 de quem está começando na bateria?',
+          // engano real e documentado
+          alternativas: [
+            'segurar a baqueta apertado demais',
+            'usar baqueta fina demais',
+            'sentar longe demais do kit',
+          ],
+          correta: 0,
+          explica:
+            'Apertar demais. A baqueta precisa quicar, e o aperto mata o quique — aí você compensa com o braço, cansa rápido e o som sai abafado. Se sua mão dói depois de 10 minutos, quase sempre é aperto, não falta de força.',
+        },
+        {
+          id: 'd0l2q2',
+          tipo: 'escolha',
+          enunciado: 'O que é tocar com dinâmica?',
+          // engano real: bater tudo com a mesma força
+          alternativas: [
+            'tocar sempre bem forte pra a bateria aparecer',
+            'variar a intensidade das batidas conforme a música pede',
+            'tocar rápido nas partes agitadas',
+          ],
+          correta: 1,
+          explica:
+            'Dinâmica é variar o volume dentro da própria levada. Bater tudo com a mesma força é o que faz uma bateria soar robótica — e é um dos motivos de gravação de iniciante soar amadora mesmo com o ritmo certo.',
+        },
+        {
+          id: 'd0l2q3',
+          tipo: 'escolha',
+          enunciado: 'Por que o metrônomo é tão insistido na bateria?',
+          alternativas: [
+            'porque bateria não tem melodia pra se guiar',
+            'porque você é o relógio da banda inteira',
+            'porque ajuda a decorar as levadas',
+          ],
+          correta: 1,
+          explica:
+            'Todo mundo se pendura no seu tempo. Um guitarrista fora do tempo atrapalha uma parte; um baterista fora do tempo derruba a música. Treinar sem metrônomo grava um tempo torto que depois custa muito pra desentortar.',
+        },
+      ],
+    },
+    {
+      id: 'contagem',
+      titulo: 'Contar alto',
+      perguntas: [
+        {
+          id: 'd0l3q1',
+          tipo: 'escolha',
+          enunciado: 'Como se conta um compasso 4/4 dividido em colcheias?',
+          alternativas: ['1 2 3 4 5 6 7 8', '1 e 2 e 3 e 4 e', '1 e & a 2 e & a'],
+          correta: 1,
+          explica:
+            'Um "e" entre cada tempo: 1 e 2 e 3 e 4 e. Isso são 8 colcheias. Quando dividir mais ainda, em semicolcheias, vira 1 e & a — o que você já viu na Groove Machine.',
+        },
+        {
+          id: 'd0l3q2',
+          tipo: 'tempo',
+          enunciado: 'Bata nos 4 tempos, contando alto: 8 batidas a 90 bpm.',
+          bpm: 90,
+          batidas: 8,
+          toleranciaMs: 140,
+          explica:
+            'Contar em voz alta parece bobo e é a coisa que mais destrava iniciante. Enquanto você conta, não tem como se perder no compasso.',
+        },
+        {
+          id: 'd0l3q3',
+          tipo: 'escolha',
+          enunciado: 'O que é um paradiddle?',
+          alternativas: [
+            'uma virada que fecha o refrão',
+            'o padrão de mãos direita-esquerda-direita-direita, e depois invertido',
+            'um jeito de afinar a caixa',
+          ],
+          correta: 1,
+          explica:
+            'É um rudimento: RLRR LRLL. Ele mistura toque simples e duplo e serve pra equilibrar as duas mãos — por isso é um dos primeiros que todo baterista aprende, junto com o toque simples e o duplo.',
+        },
+      ],
+    },
+  ],
+}
+
+const U3_BATERIA: Unidade = {
+  id: 'primeira-levada',
+  n: 3,
+  titulo: 'Sua primeira levada',
+  guia: 'Montar a levada que está na maioria das músicas que você escuta — e entender por que ela funciona.',
+  paraInstrumentos: ['bateria'],
+  licoes: [
+    {
+      id: 'rock-basico',
+      titulo: 'O rock básico',
+      perguntas: [
+        {
+          id: 'd3l1q1',
+          tipo: 'escolha',
+          enunciado: 'No rock básico, o chimbal toca em quais tempos?',
+          alternativas: ['só no 1 e no 3', 'em todos os tempos, marcando o pulso', 'só quando a caixa não toca'],
+          correta: 1,
+          explica:
+            'O chimbal marca o pulso o tempo todo — é o relógio que a banda ouve. O bumbo e a caixa conversam por baixo dele.',
+        },
+        {
+          id: 'd3l1q2',
+          tipo: 'escolha',
+          enunciado: 'E a conversa entre bumbo e caixa, como funciona?',
+          alternativas: [
+            'bumbo no 1 e 3, caixa no 2 e 4',
+            'bumbo e caixa sempre juntos',
+            'caixa no 1 e 3, bumbo no 2 e 4',
+          ],
+          correta: 0,
+          explica:
+            'Bumbo nos tempos 1 e 3, caixa respondendo no 2 e 4. É pergunta e resposta — e é essa alternância que faz a cabeça balançar. A caixa no 2 e 4 é onde a plateia bate palma.',
+        },
+        {
+          id: 'd3l1q3',
+          tipo: 'tempo',
+          enunciado: 'Bata só onde a caixa cairia — nos tempos 2 e 4: 4 batidas a 88 bpm.',
+          bpm: 44,
+          batidas: 4,
+          toleranciaMs: 200,
+          explica:
+            'Sentir o contratempo sem contar é o que separa quem toca a levada de quem sente a levada. Agora vale abrir a Groove Machine e montar isso ouvindo.',
+        },
+      ],
+    },
+  ],
+}
+
+/* ============================================================
+   PIANO — nota limpa desde o dia 1; a dificuldade é a mão
+   ============================================================ */
+
+const U0_PIANO: Unidade = {
+  id: 'seu-instrumento-piano',
+  n: 0,
+  titulo: 'Seu instrumento',
+  guia: 'Sair daqui com os dedos numerados, a mão no formato certo e as duas mãos achando o dó central.',
+  paraInstrumentos: ['piano'],
+  licoes: [
+    {
+      id: 'numeros-dos-dedos',
+      titulo: 'Os números dos dedos',
+      perguntas: [
+        {
+          id: 'p0l1q1',
+          tipo: 'escolha',
+          enunciado: 'No piano, qual dedo é o número 1?',
+          // engano real: quem vem de violão numera o indicador como 1
+          alternativas: ['o indicador', 'o polegar', 'depende da mão'],
+          correta: 1,
+          explica:
+            'O polegar é sempre o 1, nas duas mãos. Quem já tocou violão estranha, porque lá o indicador é que é o 1 — trocar isso é confusão garantida ao ler partitura de piano.',
+        },
+        {
+          id: 'p0l1q2',
+          tipo: 'escolha',
+          enunciado: 'Na mão esquerda, qual dedo é o 5?',
+          alternativas: ['o polegar', 'o mindinho', 'o dedo médio'],
+          correta: 1,
+          explica:
+            'O mindinho, igual na direita. A numeração é espelhada: os dois polegares são 1 e os dois mindinhos são 5, então os polegares ficam voltados um pro outro no centro do teclado.',
+        },
+      ],
+    },
+    {
+      id: 'formato-da-mao',
+      titulo: 'O formato da mão',
+      abertura: {
+        titulo: 'Como uma bolha na palma',
+        texto:
+          'Imagine segurar uma bolha de sabão sem estourar: os dedos ficam curvados, os nós das mãos formam uma cúpula e o pulso fica no nível das teclas. Toca-se com a PONTA do dedo, não com a polpa deitada. Isso não é firula de professor — é o que dá controle, deixa o som parelho e evita dor no pulso depois de meia hora.',
+      },
+      perguntas: [
+        {
+          id: 'p0l2q1',
+          tipo: 'escolha',
+          enunciado: 'Seus dedos ficam esticados e chatos nas teclas. Qual é o problema?',
+          // engano real e documentado
+          alternativas: [
+            'nenhum, é questão de estilo',
+            'você perde controle e os dedos fracos ficam ainda mais fracos',
+            'só atrapalha em música clássica',
+          ],
+          correta: 1,
+          explica:
+            'Dedo chato tira o controle: você toca com a polpa em vez da ponta, o som sai desigual e o anelar e o mindinho — que já são os mais fracos — ficam quase inúteis. Curvar resolve mais que qualquer exercício de força.',
+        },
+        {
+          id: 'p0l2q2',
+          tipo: 'escolha',
+          enunciado: 'Seu pulso cai abaixo do nível das teclas quando você toca. O que isso causa?',
+          alternativas: [
+            'tensão no tendão e menos independência dos dedos',
+            'nada, desde que o som saia',
+            'faz o som ficar mais suave',
+          ],
+          correta: 0,
+          explica:
+            'Pulso caído tensiona o tendão, trava a independência dos dedos e cobra a conta em dor mais tarde. Muitas vezes a causa é o banco: o cotovelo deve ficar no nível das teclas ou um pouco acima.',
+        },
+      ],
+    },
+    {
+      id: 'do-central',
+      titulo: 'O dó central',
+      perguntas: [
+        {
+          id: 'p0l3q1',
+          tipo: 'escolha',
+          enunciado: 'Como achar o dó no teclado sem decorar nada?',
+          alternativas: [
+            'é a tecla branca logo à esquerda do grupo de DUAS pretas',
+            'é a primeira tecla branca do teclado',
+            'é a tecla branca no meio do grupo de TRÊS pretas',
+          ],
+          correta: 0,
+          explica:
+            'As pretas vêm em grupos de duas e de três. O dó é sempre a branca logo antes do grupo de duas — por isso dá pra achar de olho fechado, em qualquer teclado do mundo.',
+        },
+        {
+          id: 'p0l3q2',
+          tipo: 'montar',
+          enunciado: 'Toque a posição de cinco dedos da mão direita: dó, ré, mi, fá, sol.',
+          alvo: [0, 2, 4, 5, 7],
+          ordenado: true,
+          explica:
+            'Polegar no dó e um dedo por tecla até o sol. Essa é a primeira posição que todo mundo aprende — e com ela já dá pra tocar melodia de verdade sem mover a mão do lugar.',
+        },
+        {
+          id: 'p0l3q3',
+          tipo: 'escolha',
+          enunciado: 'Qual é a maior dificuldade que aparece depois no piano?',
+          alternativas: [
+            'alcançar as teclas mais agudas',
+            'fazer as duas mãos tocarem coisas diferentes ao mesmo tempo',
+            'decorar o nome das notas pretas',
+          ],
+          correta: 1,
+          explica:
+            'Independência das mãos. O piano é generoso no começo — aperta a tecla e sai uma nota afinada — e cobra depois, quando cada mão precisa de um ritmo próprio. Saber disso desde já evita achar que você "empacou".',
+        },
+      ],
+    },
+  ],
+}
+
+/* ============================================================
+   VIOLINO — sem trastes: afinação é a dor nº1, e tensão é a causa
+   ============================================================ */
+
+const U0_VIOLINO: Unidade = {
+  id: 'seu-instrumento-violino',
+  n: 0,
+  titulo: 'Seu instrumento',
+  guia: 'Sair daqui com as quatro cordas na cabeça, o violino apoiado sem aperto e o arco tirando som limpo em vez de arranhado.',
+  paraInstrumentos: ['violino'],
+  licoes: [
+    {
+      id: 'cordas-soltas',
+      titulo: 'As quatro cordas',
+      perguntas: [
+        {
+          id: 'v0l1q1',
+          tipo: 'escolha',
+          enunciado: 'Da mais grave pra mais aguda, quais são as cordas do violino?',
+          alternativas: ['sol · ré · lá · mi', 'mi · lá · ré · sol', 'dó · sol · ré · lá'],
+          correta: 0,
+          explica:
+            'Sol, ré, lá, mi — de cinco em cinco. A terceira alternativa é a viola de arco, que é parecida mas começa no dó.',
+        },
+        {
+          id: 'v0l1q2',
+          tipo: 'ouvir',
+          enunciado: 'Ouça as duas notas. Elas estão afinadas entre si?',
+          midis: [67, 74],
+          junto: true,
+          alternativas: ['sim, é o intervalo entre duas cordas vizinhas', 'não, tem algo desafinado'],
+          correta: 0,
+          explica:
+            'É uma quinta justa — a distância entre duas cordas vizinhas do violino. Reconhecer esse som é o que te deixa afinar sem aparelho, e é uma habilidade que violinista usa a vida inteira.',
+        },
+      ],
+    },
+    {
+      id: 'segurar-sem-apertar',
+      titulo: 'Segurar sem apertar',
+      abertura: {
+        titulo: 'Tensão é o inimigo número um',
+        texto:
+          'O violino se apoia na clavícula, com o queixo só descansando em cima — não mordendo. A mão esquerda fica livre pra tocar, não pra segurar o instrumento. Isso não é conforto: é afinação. Ombro subido, queixo apertado ou polegar espremido no braço travam a mão, e mão travada não acerta a nota. No violino, quase todo problema de som começa em algum músculo apertado.',
+      },
+      perguntas: [
+        {
+          id: 'v0l2q1',
+          tipo: 'escolha',
+          enunciado: 'Você aperta o queixo com força na queixeira. Qual é a consequência?',
+          alternativas: [
+            'nenhuma, é assim que se segura mesmo',
+            'trava o pescoço e piora a afinação',
+            'o som fica mais alto',
+          ],
+          correta: 1,
+          explica:
+            'Morder a queixeira cria tensão no pescoço e engessa o instrumento. Violino rígido em vez de equilibrado deixa a mão esquerda dura — e mão dura erra a nota. O peso da cabeça já basta pra segurar.',
+        },
+        {
+          id: 'v0l2q2',
+          tipo: 'escolha',
+          enunciado: 'Como o dedo deve chegar na corda?',
+          // engano real: torcer o dedo de lado
+          alternativas: [
+            'caindo de cima, como um martelinho',
+            'deslizando de lado até achar a nota',
+            'apertando com a polpa bem deitada',
+          ],
+          correta: 0,
+          explica:
+            'De cima, como martelinho, com a mão em arco. Quando o dedo torce de lado, a mão perde o formato aberto e os outros dedos ficam sem lugar — aí a afinação vira loteria a cada nota.',
+        },
+      ],
+    },
+    {
+      id: 'o-arco',
+      titulo: 'O arco',
+      perguntas: [
+        {
+          id: 'v0l3q1',
+          tipo: 'escolha',
+          enunciado: 'Seu som está arranhado. Qual é a causa mais provável?',
+          alternativas: [
+            'a corda está velha',
+            'você está apertando o arco de nervoso, com pressão irregular',
+            'o violino é de qualidade baixa',
+          ],
+          correta: 1,
+          explica:
+            'Quase sempre é a mão direita apertada. Arco preso demais ou solto demais, com pressão que varia no meio da arcada, produz aquele som raspado. Polegar relaxado e dedos curvos resolvem mais que trocar de instrumento.',
+        },
+        {
+          id: 'v0l3q2',
+          tipo: 'escolha',
+          enunciado: 'Em relação ao cavalete, como o arco deve andar?',
+          alternativas: ['paralelo a ele', 'inclinado em diagonal', 'tanto faz, o som é igual'],
+          correta: 0,
+          explica:
+            'Paralelo ao cavalete, sempre. Arco torto escorrega e muda o ponto de contato com a corda, e o som sai fino ou raspado. Manter o arco reto é o exercício que mais rende no primeiro mês.',
+        },
+        {
+          id: 'v0l3q3',
+          tipo: 'escolha',
+          enunciado: 'Por que praticar cordas soltas antes de usar os dedos?',
+          alternativas: [
+            'porque é o que se cobra em prova',
+            'pra cuidar só do arco e do som, sem se preocupar com afinação ao mesmo tempo',
+            'porque os dedos precisam ganhar calo antes',
+          ],
+          correta: 1,
+          explica:
+            'Uma dificuldade por vez. Sem os dedos, a nota já sai afinada e você pode dedicar toda a atenção ao arco. Depois que o som estiver limpo, a mão esquerda entra num terreno bem mais fácil.',
+        },
+      ],
+    },
+  ],
+}
+
 /* ---------- montagem e consultas ---------- */
 
-const TODAS_UNIDADES: Unidade[] = [U0_CORDAS, U1, U2, U3_CORDAS]
+const TODAS_UNIDADES: Unidade[] = [
+  U0_CORDAS,
+  U0_BAIXO,
+  U0_BATERIA,
+  U0_PIANO,
+  U0_VIOLINO,
+  U1,
+  U2,
+  U3_CORDAS,
+  U3_BATERIA,
+]
 
 /** A trilha de um instrumento: unidades universais + as do galho dele. */
-export function trilhaDe(instrumento: InstrumentSoundId): Unidade[] {
+export function trilhaDe(instrumento: TrilhaInstrumento): Unidade[] {
   return TODAS_UNIDADES.filter(
     (u) => !u.paraInstrumentos || u.paraInstrumentos.includes(instrumento),
   )
 }
 
-export function licoesDe(instrumento: InstrumentSoundId) {
+export function licoesDe(instrumento: TrilhaInstrumento) {
   return trilhaDe(instrumento).flatMap((u) => u.licoes.map((l) => ({ unidade: u, licao: l })))
 }
 
-export function licaoPorId(id: string, instrumento: InstrumentSoundId) {
+export function licaoPorId(id: string, instrumento: TrilhaInstrumento) {
   return licoesDe(instrumento).find((x) => x.licao.id === id)
 }
 
 /** O próximo passo: a primeira lição não concluída. */
-export function proximaLicao(concluidas: string[], instrumento: InstrumentSoundId) {
+export function proximaLicao(concluidas: string[], instrumento: TrilhaInstrumento) {
   return licoesDe(instrumento).find((x) => !concluidas.includes(x.licao.id)) ?? null
 }
 
 export function licaoDesbloqueada(
   licaoId: string,
   concluidas: string[],
-  instrumento: InstrumentSoundId,
+  instrumento: TrilhaInstrumento,
 ): boolean {
   const lista = licoesDe(instrumento)
   const i = lista.findIndex((x) => x.licao.id === licaoId)
@@ -594,7 +1131,7 @@ export function licaoDesbloqueada(
   return concluidas.includes(lista[i - 1].licao.id)
 }
 
-export function progressoPct(concluidas: string[], instrumento: InstrumentSoundId): number {
+export function progressoPct(concluidas: string[], instrumento: TrilhaInstrumento): number {
   const lista = licoesDe(instrumento)
   const feitas = lista.filter((x) => concluidas.includes(x.licao.id)).length
   return Math.round((feitas / lista.length) * 100)

@@ -1,7 +1,11 @@
 ﻿import { useEffect, useRef } from 'react'
 import { gsap } from '../../motion/useLenisGsap'
-import { licaoDesbloqueada, licoesDe, type Unidade } from '../../content/trilha'
-import type { InstrumentSoundId } from '../../audio/instruments'
+import {
+  licaoDesbloqueada,
+  licoesDe,
+  type TrilhaInstrumento,
+  type Unidade,
+} from '../../content/trilha'
 
 /* O caminho é um BRAÇO VISTO DE CIMA, descendo a tela.
    Cada lição é um marcador de casa; o fim de unidade é a MARCA DUPLA da 12ª.
@@ -23,7 +27,7 @@ function fretY(n: number): number {
 }
 
 interface Props {
-  instrumento: InstrumentSoundId
+  instrumento: TrilhaInstrumento
   concluidas: string[]
   atualId: string | null
   onEscolher: (licaoId: string) => void

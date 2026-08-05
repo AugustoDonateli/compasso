@@ -93,29 +93,64 @@ describe('estrutura da trilha', () => {
 })
 
 describe('galhos por instrumento', () => {
-  it('quem toca corda vê as unidades do instrumento', () => {
-    const ids = trilhaDe('guitarra').map((u) => u.id)
-    expect(ids).toContain('seu-instrumento-cordas')
-    expect(ids).toContain('primeiros-acordes')
-    expect(trilhaDe('violao').map((u) => u.id)).toContain('seu-instrumento-cordas')
-  })
-
-  it('quem não toca corda não vê as unidades de corda, mas vê a teoria', () => {
-    const ids = trilhaDe('piano').map((u) => u.id)
-    expect(ids).not.toContain('seu-instrumento-cordas')
-    expect(ids).toContain('som-tem-nome')
-    expect(ids).toContain('o-pulso')
-  })
-
-  it('todo instrumento tem pelo menos uma trilha navegável', () => {
+  it('cada instrumento vê o SEU galho e nenhum outro', () => {
+    const esperado: Record<string, string> = {
+      guitarra: 'seu-instrumento-cordas',
+      violao: 'seu-instrumento-cordas',
+      baixo: 'seu-instrumento-baixo',
+      piano: 'seu-instrumento-piano',
+      violino: 'seu-instrumento-violino',
+    }
     for (const i of INSTRUMENTOS) {
-      expect(licoesDe(i).length).toBeGreaterThan(0)
+      const ids = trilhaDe(i).map((u) => u.id)
+      expect(ids).toContain(esperado[i])
+      // nenhum galho de outro instrumento vazou
+      for (const [outro, id] of Object.entries(esperado)) {
+        if (esperado[i] !== id) expect(ids).not.toContain(outro === i ? '' : id)
+      }
     }
   })
 
-  it('a unidade do instrumento vem antes da teoria pra quem toca corda', () => {
-    const primeira = trilhaDe('guitarra')[0]
-    expect(primeira.id).toBe('seu-instrumento-cordas')
+  it('todo instrumento começa pelo galho dele, antes da teoria', () => {
+    for (const i of INSTRUMENTOS) {
+      expect(trilhaDe(i)[0].n).toBe(0)
+      expect(trilhaDe(i)[0].paraInstrumentos).toContain(i)
+    }
+  })
+
+  it('todo instrumento vê a teoria universal', () => {
+    for (const i of INSTRUMENTOS) {
+      const ids = trilhaDe(i).map((u) => u.id)
+      expect(ids).toContain('som-tem-nome')
+      expect(ids).toContain('o-pulso')
+    }
+  })
+
+  it('todo instrumento tem trilha navegável de tamanho decente', () => {
+    for (const i of INSTRUMENTOS) {
+      expect(licoesDe(i).length).toBeGreaterThanOrEqual(7)
+    }
+  })
+
+  it('só instrumento de corda usa perguntas de braço', () => {
+    const comBraco: InstrumentSoundId[] = ['guitarra', 'violao', 'baixo']
+    for (const i of INSTRUMENTOS) {
+      const temAchar = trilhaDe(i).some((u) =>
+        u.licoes.some((l) => l.perguntas.some((p) => p.tipo === 'achar')),
+      )
+      if (!comBraco.includes(i)) expect(temAchar).toBe(false)
+    }
+  })
+
+  it('aberturas existem, mas só onde o conceito tem muitas peças', () => {
+    const comAbertura = TODAS_UNIDADES.flatMap((u) => u.licoes).filter((l) => l.abertura)
+    const total = TODAS_UNIDADES.flatMap((u) => u.licoes).length
+    expect(comAbertura.length).toBeGreaterThan(0)
+    // se toda lição tivesse abertura, perderíamos o efeito de pré-teste
+    expect(comAbertura.length).toBeLessThan(total / 2)
+    for (const l of comAbertura) {
+      expect(l.abertura!.texto.length).toBeGreaterThan(120)
+    }
   })
 })
 
