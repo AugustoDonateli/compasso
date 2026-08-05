@@ -136,14 +136,16 @@ export function Keyboard({
               onPointerDown={() => active && onPick(pc)}
               className={active ? 'transition-colors duration-150 hover:brightness-125' : ''}
             />
-            {(state(pc) === 'correct' || state(pc) === 'wrong') && (
+            {/* pretas SEMPRE rotuladas: deixá-las mudas assumiria que quem
+                responde sabe piano — e aqui o público toca corda */}
+            {state(pc) !== 'inert' && (
               <text
                 x={x + BLACK_W / 2}
                 y={BLACK_H - 12}
                 textAnchor="middle"
-                fontSize={12}
+                fontSize={11}
                 fontFamily="Space Mono, monospace"
-                fill="#f2ede6"
+                fill={state(pc) === 'idle' ? '#a69c90' : '#f2ede6'}
                 pointerEvents="none"
               >
                 {noteSolfejo(spellPc(pc))}
