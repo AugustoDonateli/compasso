@@ -20,6 +20,7 @@ const ATALHOS = [
   { to: '/ouvido', nome: 'Ouvido', desc: 'nota, intervalo e acorde de ouvido' },
   { to: '/braco', nome: 'Mapa das notas', desc: 'onde cada nota mora no braço' },
   { to: '/groove', nome: 'Groove machine', desc: 'monte a levada, veja a partitura' },
+  { to: '/desmontador', nome: 'Desmontador', desc: 'a teoria por dentro das músicas que você conhece' },
 ]
 
 interface Props {

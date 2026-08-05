@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 /* A barra de navegação.
@@ -14,6 +14,7 @@ const FERRAMENTAS = [
   { to: '/afinador', nome: 'afinador' },
   { to: '/ouvido', nome: 'ouvido' },
   { to: '/braco', nome: 'mapa das notas' },
+  { to: '/desmontador', nome: 'desmontador' },
   { to: '/groove', nome: 'groove' },
 ]
 

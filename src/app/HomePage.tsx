@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Hero } from './Hero'
 import { Painel } from './Painel'
@@ -230,6 +230,7 @@ const PROGRAM: Array<{ n: string; title: string; desc: string; to?: string }> = 
   {
     n: '03',
     title: 'Desmontador',
+    to: '/desmontador',
     desc: 'abre uma música que você ama e vê a teoria trabalhando por dentro dela',
   },
   {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { HomePage } from './app/HomePage'
 import { BracoPage } from './app/pages/BracoPage'
@@ -6,6 +6,7 @@ import { GroovePage } from './app/pages/GroovePage'
 import { OuvidoPage } from './app/pages/OuvidoPage'
 import { TrilhaPage } from './app/pages/TrilhaPage'
 import { AfinadorPage } from './app/pages/AfinadorPage'
+import { DesmontadorPage } from './app/pages/DesmontadorPage'
 import { Nav } from './app/Nav'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
@@ -47,6 +48,7 @@ function App() {
         <Route path="/ouvido" element={<OuvidoPage />} />
         <Route path="/trilha" element={<TrilhaPage />} />
         <Route path="/afinador" element={<AfinadorPage />} />
+        <Route path="/desmontador" element={<DesmontadorPage />} />
       </Routes>
     </BrowserRouter>
   )
