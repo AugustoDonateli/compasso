@@ -1,0 +1,130 @@
+/* Compasso — sistema de design
+   Paleta: latão sobre grafite quente. Nada de Inter, nada de roxo-azul,
+   nada de rounded-2xl + shadow. Elevação por borda hairline e valor de fundo. */
+
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+
+@import 'tailwindcss';
+
+/* ---------- Tokens por tema ---------- */
+
+:root {
+  /* Tema escuro é o padrão do Compasso */
+  --bg-base: #12100e;
+  --bg-raised: #1b1815;
+  --bg-panel: #221e1a; /* painéis-hardware: escuros nos DOIS temas */
+  --border: #332d27;
+  --text: #f2ede6;
+  --text-2: #a69c90;
+  --text-muted: #6e655c;
+  --accent: #e0a34a;
+  --accent-dim: #8a6329;
+  --ok: #6e8f5a;
+  --err: #b2543c;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg-base: #f5f1ea;
+  --bg-raised: #faf7f2;
+  /* --bg-panel e tokens de hardware NÃO invertem: a ferramenta é seu próprio palco escuro */
+  --border: #ddd5c9;
+  --text: #17140f;
+  --text-2: #5a5148;
+  --text-muted: #8a8075;
+  --accent: #a66e1c;
+  --accent-dim: #c9973d;
+
+  color-scheme: light;
+}
+
+/* Tokens fixos dos painéis-hardware (iguais nos dois temas) */
+:root {
+  --panel-border: #332d27;
+  --panel-text: #f2ede6;
+  --panel-text-2: #a69c90;
+  --panel-accent: #e0a34a;
+}
+
+/* ---------- Ponte pro Tailwind (utilities geradas a partir dos tokens) ---------- */
+
+@theme inline {
+  --color-base: var(--bg-base);
+  --color-raised: var(--bg-raised);
+  --color-panel: var(--bg-panel);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-ink-muted: var(--text-muted);
+  --color-brass: var(--accent);
+  --color-brass-dim: var(--accent-dim);
+  --color-ok: var(--ok);
+  --color-err: var(--err);
+
+  --color-panel-line: var(--panel-border);
+  --color-panel-ink: var(--panel-text);
+  --color-panel-ink-2: var(--panel-text-2);
+  --color-panel-brass: var(--panel-accent);
+
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-sans: 'Space Grotesk Variable', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+
+  /* Raio quase zero: identidade de equipamento, não de card flutuante */
+  --radius-hair: 2px;
+}
+
+/* ---------- Base ---------- */
+
+html {
+  background-color: var(--bg-base);
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color 240ms ease,
+    color 240ms ease;
+}
+
+/* Fraunces com os eixos expressivos ligados no display */
+.type-display {
+  font-family: var(--font-display);
+  font-variation-settings:
+    'SOFT' 40,
+    'WONK' 1;
+  font-weight: 560;
+  letter-spacing: -0.015em;
+}
+
+/* Rótulo técnico: mono, caixa alta, espaçado — cara de serigrafia de equipamento */
+.type-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--bg-base);
+}
+
+/* Movimento: desacelera, não desliga */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+}
