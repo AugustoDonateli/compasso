@@ -133,7 +133,15 @@ export function Hero() {
   }, [canvasRef, draw])
 
   return (
-    <section ref={sectionRef} className="relative h-screen overflow-hidden bg-[#12100e]">
+    /* data-heroi: a barra de navegação usa isso pra saber que existe um herói
+       ocupando a tela e se esconder enquanto ele estiver no topo. Sem essa
+       marca ela olharia só a rota — e sumiria também no painel, que é a mesma
+       rota mas não tem herói nenhum. */
+    <section
+      ref={sectionRef}
+      data-heroi
+      className="relative h-screen overflow-hidden bg-[#12100e]"
+    >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {/* luz onde o texto assenta */}

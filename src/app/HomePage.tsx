@@ -371,6 +371,10 @@ export function HomePage() {
     <div className="min-h-screen bg-base text-ink">
       <Preloader onDone={() => setReady(true)} />
       <Hero />
+      {/* sentinela da barra de navegação: quando este ponto entra na tela,
+          o herói já passou e a barra aparece. IntersectionObserver não
+          depende de rAF nem do Lenis — por isso funciona sempre. */}
+      <div data-pos-heroi aria-hidden className="h-px" />
       <Barline measure={2} label="por que este site existe" />
       <Manifesto />
       <Marquee />

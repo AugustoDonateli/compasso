@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { gsap } from '../motion/useLenisGsap'
 
 /* A barra de navegação.
    Antes disso, estando no Afinador o único caminho pro Ouvido era voltar pra
@@ -20,32 +19,60 @@ const FERRAMENTAS = [
 
 export function Nav() {
   const { pathname } = useLocation()
-  const naLanding = pathname === '/'
-  const [visivel, setVisivel] = useState(!naLanding)
+  const [visivel, setVisivel] = useState(false)
   const [menuAberto, setMenuAberto] = useState(false)
 
   useEffect(() => {
-    if (!naLanding) {
+    /* Duas armadilhas que já morderam aqui:
+
+       1. NÃO decidir pela rota. O painel mora na mesma rota da landing e não
+          tem herói — esconder por rota fazia a barra sumir justo onde ela é
+          mais útil. Quem manda é a presença de um herói na tela.
+
+       2. NÃO usar o evento 'scroll' do window nem o gsap.ticker. Com o Lenis
+          no meio, o evento nativo não chega de forma confiável; e o ticker
+          depende de requestAnimationFrame, que não roda em toda situação.
+          O ScrollTrigger é o caminho certo: ele já é atualizado pelo próprio
+          callback de scroll do Lenis (ver motion/useLenisGsap), então está
+          em sincronia por construção. */
+    const sentinela = document.querySelector('[data-pos-heroi]')
+
+    // sem sentinela = página sem herói (painel, ferramentas): barra sempre à vista
+    if (!sentinela) {
       setVisivel(true)
       return
     }
-    /* IMPORTANTE: não dá pra usar o evento 'scroll' do window aqui. O Lenis
-       intercepta a rolagem e o evento nativo simplesmente não dispara — a
-       barra ficaria invisível pra sempre na landing. Como o Lenis é movido
-       pelo gsap.ticker, ler a posição por ali é o único jeito garantido de
-       estar em sincronia. */
-    let ultimo = false
-    const checar = () => {
-      const deveAparecer = window.scrollY > window.innerHeight * 0.5
-      if (deveAparecer !== ultimo) {
-        ultimo = deveAparecer
-        setVisivel(deveAparecer)
-      }
+
+    setVisivel(false)
+
+    /* DOIS SINAIS INDEPENDENTES, de propósito.
+       A falha que dói aqui é a barra NUNCA aparecer — a pessoa fica sem
+       navegação. Então em vez de apostar num único mecanismo, qualquer um
+       dos dois pode revelar a barra:
+
+       1. IntersectionObserver na sentinela. A pergunta certa não é "ela está
+          à vista?" (ela tem 1px, some assim que você passa) e sim "ela já
+          ficou pra trás?" — o topo dela acima da tela.
+       2. Um simples listener de scroll, como rede de segurança. */
+    const revelarSe = (cond: boolean) => {
+      if (cond) setVisivel(true)
     }
-    checar()
-    gsap.ticker.add(checar)
-    return () => gsap.ticker.remove(checar)
-  }, [naLanding])
+
+    const obs = new IntersectionObserver(
+      ([e]) => setVisivel(e.boundingClientRect.top < 0),
+      { threshold: 0 },
+    )
+    obs.observe(sentinela)
+
+    const aoRolar = () =>
+      revelarSe(sentinela.getBoundingClientRect().top < window.innerHeight * 0.4)
+    window.addEventListener('scroll', aoRolar, { passive: true })
+
+    return () => {
+      obs.disconnect()
+      window.removeEventListener('scroll', aoRolar)
+    }
+  }, [pathname])
 
   useEffect(() => setMenuAberto(false), [pathname])
 
