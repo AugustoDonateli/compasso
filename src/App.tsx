@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { HomePage } from './app/HomePage'
 import { BracoPage } from './app/pages/BracoPage'
+import { GroovePage } from './app/pages/GroovePage'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
 import { useLenisGsap } from './motion/useLenisGsap'
@@ -37,6 +38,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/braco" element={<BracoPage />} />
+        <Route path="/groove" element={<GroovePage />} />
       </Routes>
     </BrowserRouter>
   )

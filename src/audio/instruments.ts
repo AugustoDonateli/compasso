@@ -76,6 +76,39 @@ export function preloadInstrument(id: InstrumentSoundId): void {
   void getInstrument(id).catch(() => cache.delete(id))
 }
 
+/* ---------- bateria (não-afinada: Players, não Sampler) ---------- */
+
+export type DrumPiece = 'bumbo' | 'caixa' | 'chimbal' | 'tom'
+
+const DRUM_FILES: Record<DrumPiece, string> = {
+  bumbo: 'kick.mp3',
+  caixa: 'snare.mp3',
+  chimbal: 'hihat.mp3',
+  tom: 'tom1.mp3',
+}
+
+let kitPromise: Promise<Tone.Players> | null = null
+
+export function getDrumKit(): Promise<Tone.Players> {
+  if (!kitPromise) {
+    kitPromise = new Promise((resolve, reject) => {
+      const players = new Tone.Players(DRUM_FILES, {
+        baseUrl: '/assets/audio/bateria/',
+        onload: () => resolve(players),
+        onerror: (e) => {
+          kitPromise = null
+          reject(e)
+        },
+      }).toDestination()
+    })
+  }
+  return kitPromise
+}
+
+export function preloadDrumKit(): void {
+  void getDrumKit().catch(() => {})
+}
+
 /** Toca uma nota MIDI no instrumento. Destrava o áudio se preciso. */
 export async function playMidi(
   id: InstrumentSoundId,

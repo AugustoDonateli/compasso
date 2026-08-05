@@ -221,6 +221,7 @@ const PROGRAM: Array<{ n: string; title: string; desc: string; to?: string }> = 
     n: '02',
     title: 'Groove machine',
     desc: 'monta a levada e a partitura se escreve sozinha — leitura de ritmo sem sentir',
+    to: '/groove',
   },
   {
     n: '03',
