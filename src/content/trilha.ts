@@ -74,7 +74,22 @@ export interface QTempo extends Base {
   toleranciaMs: number
 }
 
-export type Pergunta = QEscolha | QOuvir | QMontar | QAchar | QTempo
+/** TOCAR NO INSTRUMENTO DE VERDADE, conferido pelo microfone.
+ *
+ *  Este é o tipo que justifica o site existir. Um vídeo pode explicar onde
+ *  fica o lá; só o Compasso confere se você TOCOU o lá. Aceita qualquer
+ *  oitava e qualquer posição — o que importa é ter saído do instrumento.
+ *
+ *  Sempre tem saída pela tela: quem não tem microfone não fica preso. */
+export interface QTocar extends Base {
+  tipo: 'tocar'
+  enunciado: string
+  alvo: PitchClass
+  /** o que mostrar se a pessoa optar por responder pela tela */
+  alternativaNaTela: 'braco' | 'teclado'
+}
+
+export type Pergunta = QEscolha | QOuvir | QMontar | QAchar | QTempo | QTocar
 
 /* ---------- estrutura ---------- */
 
@@ -263,6 +278,15 @@ const U0_CORDAS: Unidade = {
           alvo: 9,
           explica:
             'A mesma nota mora em vários lugares do braço, e todas essas posições são lá. Descobrir isso é o que solta você dos desenhos decorados.',
+        },
+        {
+          id: 'u0l3q4',
+          tipo: 'tocar',
+          enunciado: 'Agora de verdade: pegue a guitarra e toque um mi.',
+          alvo: 4,
+          alternativaNaTela: 'braco',
+          explica:
+            'Você acabou de tocar no instrumento e o site conferiu. Esse é o ciclo que faz alguém aprender de verdade: ouvir, tocar e saber na hora se acertou — algo que assistir vídeo nunca dá.',
         },
       ],
     },
@@ -597,6 +621,15 @@ const U0_BAIXO: Unidade = {
           posicao: { corda: 0, casa: 0 },
           explica:
             'Essa é a nota mais grave do baixo padrão. É ela que sustenta a banda inteira: se o baixo some, a música fica sem chão.',
+        },
+        {
+          id: 'b0l1q4',
+          tipo: 'tocar',
+          enunciado: 'Pegue o baixo e toque um lá — a 3ª corda solta serve.',
+          alvo: 9,
+          alternativaNaTela: 'braco',
+          explica:
+            'O site ouviu você tocar. Esse ciclo — o site pede, você toca, ele confere na hora — é a razão de estudar aqui em vez de assistir alguém explicar.',
         },
         {
           id: 'b0l1q3',
@@ -950,6 +983,15 @@ const U0_PIANO: Unidade = {
             'Polegar no dó e um dedo por tecla até o sol. Essa é a primeira posição que todo mundo aprende — e com ela já dá pra tocar melodia de verdade sem mover a mão do lugar.',
         },
         {
+          id: 'p0l3q4',
+          tipo: 'tocar',
+          enunciado: 'Vá até o teclado e toque um dó — qualquer um.',
+          alvo: 0,
+          alternativaNaTela: 'teclado',
+          explica:
+            'O site ouviu a nota sair do seu instrumento. Ele não perguntou se você sabe onde fica o dó: ele conferiu se você tocou. É a diferença entre saber e fazer.',
+        },
+        {
           id: 'p0l3q3',
           tipo: 'escolha',
           enunciado: 'Qual é a maior dificuldade que aparece depois no piano?',
@@ -1067,6 +1109,15 @@ const U0_VIOLINO: Unidade = {
           correta: 0,
           explica:
             'Paralelo ao cavalete, sempre. Arco torto escorrega e muda o ponto de contato com a corda, e o som sai fino ou raspado. Manter o arco reto é o exercício que mais rende no primeiro mês.',
+        },
+        {
+          id: 'v0l3q4',
+          tipo: 'tocar',
+          enunciado: 'Passe o arco na corda lá solta e segure a nota.',
+          alvo: 9,
+          alternativaNaTela: 'teclado',
+          explica:
+            'Aqui o site faz o que nenhum vídeo faz: ele confere se a nota saiu afinada. No violino, sem trastes, isso é tudo — e ter alguém conferindo a cada nota é a diferença entre criar o ouvido certo e gravar o errado.',
         },
         {
           id: 'v0l3q3',

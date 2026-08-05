@@ -2,6 +2,7 @@
 import type { Licao, Pergunta } from '../../content/trilha'
 import { Keyboard } from '../../tools/keyboard/Keyboard'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
+import { TocarNota } from './TocarNota'
 import { TUNINGS } from '../../theory/fretboard'
 import { midiToPc, noteSolfejo, spellPc, type PitchClass } from '../../theory/notes'
 import { playMidi, type InstrumentSoundId } from '../../audio/instruments'
@@ -34,6 +35,8 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
   const [respondidas, setRespondidas] = useState(0)
   const [batidas, setBatidas] = useState<number[]>([])
   const [tocandoMetro, setTocandoMetro] = useState(false)
+  /** quem não tem microfone responde pela tela — nunca prende ninguém */
+  const [semMicrofone, setSemMicrofone] = useState(false)
   const metroRef = useRef<number | null>(null)
   const inicioRef = useRef(0)
 
@@ -83,6 +86,7 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
     setEscolha(null)
     setMontado([])
     setBatidas([])
+    setSemMicrofone(false)
     if (i + 1 >= fila.length) onConcluir(acertos, total)
     else setI(i + 1)
   }
@@ -304,6 +308,47 @@ export function Sessao({ licao, som, onConcluir, onSair }: Props) {
               }}
               roleOf={estado !== 'respondendo' ? (pc) => (pc === p.alvo ? 'tonica' : 'fora') : undefined}
             />
+          )}
+
+          {/* TOCAR: o site ouve seu instrumento de verdade.
+              É a pergunta que nenhum vídeo consegue fazer. */}
+          {p.tipo === 'tocar' && estado === 'respondendo' && !semMicrofone && (
+            <TocarNota
+              alvo={p.alvo}
+              onAcertou={() => registrar(true)}
+              onDesistir={() => setSemMicrofone(true)}
+            />
+          )}
+          {p.tipo === 'tocar' && (semMicrofone || estado !== 'respondendo') && (
+            <>
+              {semMicrofone && estado === 'respondendo' && (
+                <p className="type-label mb-5 text-[#a69c90]">
+                  sem problema — mostra aí na tela onde fica
+                </p>
+              )}
+              {p.alternativaNaTela === 'teclado' ? (
+                <Keyboard
+                  enabledPcs={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}
+                  onPick={(pc) => {
+                    void playMidi(som, 60 + pc)
+                    if (estado === 'respondendo') registrar(pc === p.alvo)
+                  }}
+                  correctPc={estado !== 'respondendo' ? p.alvo : null}
+                  disabled={estado !== 'respondendo'}
+                />
+              ) : (
+                <Fretboard
+                  tuning={TUNINGS[som === 'baixo' ? 'baixo' : som === 'violao' ? 'violao' : 'guitarra']}
+                  onPlay={(_c, _f, midi) => {
+                    void playMidi(som, midi)
+                    if (estado === 'respondendo') registrar(midiToPc(midi) === p.alvo)
+                  }}
+                  roleOf={
+                    estado !== 'respondendo' ? (pc) => (pc === p.alvo ? 'tonica' : 'fora') : undefined
+                  }
+                />
+              )}
+            </>
           )}
 
           {/* TEMPO: bater junto */}

@@ -142,6 +142,29 @@ describe('galhos por instrumento', () => {
     }
   })
 
+  it('todo instrumento afinado tem pelo menos uma pergunta tocada no microfone', () => {
+    // é a vantagem que o site tem sobre vídeo: bateria fica de fora porque
+    // percussão não tem altura definida
+    for (const i of INSTRUMENTOS) {
+      const temTocar = trilhaDe(i).some((u) =>
+        u.licoes.some((l) => l.perguntas.some((p) => p.tipo === 'tocar')),
+      )
+      expect(temTocar).toBe(true)
+    }
+  })
+
+  it('toda pergunta de microfone tem saída pela tela — ninguém fica preso', () => {
+    for (const u of TODAS_UNIDADES) {
+      for (const l of u.licoes) {
+        for (const p of l.perguntas) {
+          if (p.tipo === 'tocar') {
+            expect(['braco', 'teclado']).toContain(p.alternativaNaTela)
+          }
+        }
+      }
+    }
+  })
+
   it('aberturas existem, mas só onde o conceito tem muitas peças', () => {
     const comAbertura = TODAS_UNIDADES.flatMap((u) => u.licoes).filter((l) => l.abertura)
     const total = TODAS_UNIDADES.flatMap((u) => u.licoes).length
