@@ -118,6 +118,76 @@ body {
   color: var(--bg-base);
 }
 
+/* ---------- Motivos de partitura ---------- */
+
+/* Barra de compasso: o divisor de seções do site. Nunca borda de card. */
+.barline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.barline::before,
+.barline::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+.barline-heavy::before,
+.barline-heavy::after {
+  height: 2px;
+  background: var(--text-2);
+}
+
+/* Número do compasso: ┃2┃ */
+.measure-no {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-left: 2px solid var(--text-2);
+  border-right: 2px solid var(--text-2);
+  padding-inline: 0.5rem;
+}
+
+/* As cinco linhas da pauta, como textura de fundo discreta */
+.staff-lines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--border) 55%, transparent) 0,
+    color-mix(in srgb, var(--border) 55%, transparent) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+  background-size: 100% 57px; /* 4 vãos + 5 linhas */
+  background-repeat: no-repeat;
+}
+
+/* Marquee: faixa contínua de notas */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 28s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation-duration: 90s;
+  }
+}
+
+/* Linha de reveal (SplitText cria a máscara; isso evita flash antes do split) */
+.reveal-line {
+  will-change: transform;
+}
+
 /* Movimento: desacelera, não desliga */
 @media (prefers-reduced-motion: reduce) {
   *,
