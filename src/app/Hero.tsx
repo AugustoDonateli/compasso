@@ -14,22 +14,24 @@ const DESKTOP = { dir: 'desktop', count: 121 }
 const MOBILE = { dir: 'mobile', count: 91 }
 const FRETS_IN_JOURNEY = 12
 
-/** Os atos da narrativa: as dores reais de quem tenta aprender, em sequência */
+/** Os atos da narrativa: as dores reais de quem tenta aprender, em sequência.
+ *  Com a viagem mais curta, os atos começam antes e ficam mais colados —
+ *  senão passariam rápido demais pra ler. */
 const BEATS = [
   {
-    from: 0.3,
-    to: 0.52,
+    from: 0.24,
+    to: 0.5,
     align: 'left' as const,
     text: 'Você quer aprender.\nMas ninguém te diz por onde começar.',
   },
   {
-    from: 0.56,
-    to: 0.78,
+    from: 0.53,
+    to: 0.79,
     align: 'right' as const,
     text: 'E teoria longe do instrumento\nnão gruda.',
   },
   {
-    from: 0.84,
+    from: 0.82,
     to: 1.01,
     align: 'left' as const,
     text: 'Então a gente fez um caminho.\nEle começa aqui.',
@@ -112,7 +114,9 @@ export function Hero() {
     [draw],
   )
 
-  useScrollDriver(sectionRef, onProgress, { end: '+=250%', pin: true, scrub: 0.5 })
+  // 250% era viagem longa demais: a pessoa rolava muito antes de chegar no
+  // conteúdo. 150% mantém a narrativa em três atos e corta 40% do caminho.
+  useScrollDriver(sectionRef, onProgress, { end: '+=150%', pin: true, scrub: 0.5 })
 
   useEffect(() => {
     const canvas = canvasRef.current
