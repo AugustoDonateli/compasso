@@ -73,44 +73,48 @@
 
    Contraste medido contra o fundo de cada tema; mínimo de 4,5:1 em todos. */
 
+/* Os seis timbres, nomeados uma vez só */
 :root {
-  --timbre: #7fd1a0; /* guitarra: verde de mostrador de afinador */
-}
-:root[data-instrumento='violao'] {
-  --timbre: #a8b36a; /* sálvia amadeirada */
-}
-:root[data-instrumento='baixo'] {
-  --timbre: #c97b3a; /* âmbar profundo */
-}
-:root[data-instrumento='piano'] {
-  --timbre: #a8c4d0; /* marfim frio */
-}
-:root[data-instrumento='bateria'] {
+  --t-guitarra: #7fd1a0; /* verde de mostrador de afinador */
+  --t-violao: #a8b36a; /* sálvia amadeirada */
+  --t-baixo: #c97b3a; /* âmbar profundo */
+  --t-piano: #a8c4d0; /* marfim frio */
   /* o #d9483b do desenho dava 4,48:1 — a um décimo do mínimo. Clareado. */
-  --timbre: #e0574a; /* vermelho de luz de gravação */
+  --t-bateria: #e0574a; /* vermelho de luz de gravação */
+  --t-violino: #b48ead; /* malva */
 }
-:root[data-instrumento='violino'] {
-  --timbre: #b48ead; /* malva */
+/* No tema claro os mesmos timbres escurecem, senão somem no papel */
+:root[data-theme='light'] {
+  --t-guitarra: #276b4e;
+  --t-violao: #5e6b2e;
+  --t-baixo: #8a4a18;
+  --t-piano: #3e6273;
+  --t-bateria: #a6301f;
+  --t-violino: #6e4a68;
 }
 
-/* No tema claro os mesmos timbres precisam escurecer, senão somem no papel */
-:root[data-theme='light'] {
-  --timbre: #276b4e;
+/* `data-timbre` funciona na raiz E em qualquer elemento: a raiz carrega o
+   instrumento de quem toca, e uma ferramenta pode vestir outro timbre no seu
+   próprio pedaço — o afinador troca de cor conforme o instrumento escolhido
+   ali dentro, sem mexer no resto do site. */
+:root,
+[data-timbre='guitarra'] {
+  --timbre: var(--t-guitarra);
 }
-:root[data-theme='light'][data-instrumento='violao'] {
-  --timbre: #5e6b2e;
+[data-timbre='violao'] {
+  --timbre: var(--t-violao);
 }
-:root[data-theme='light'][data-instrumento='baixo'] {
-  --timbre: #8a4a18;
+[data-timbre='baixo'] {
+  --timbre: var(--t-baixo);
 }
-:root[data-theme='light'][data-instrumento='piano'] {
-  --timbre: #3e6273;
+[data-timbre='piano'] {
+  --timbre: var(--t-piano);
 }
-:root[data-theme='light'][data-instrumento='bateria'] {
-  --timbre: #a6301f;
+[data-timbre='bateria'] {
+  --timbre: var(--t-bateria);
 }
-:root[data-theme='light'][data-instrumento='violino'] {
-  --timbre: #6e4a68;
+[data-timbre='violino'] {
+  --timbre: var(--t-violino);
 }
 
 /* ---------- Luz e sombra ----------

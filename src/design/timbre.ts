@@ -8,8 +8,10 @@ import type { TrilhaInstrumento } from '../content/trilha'
  *
  *  Quem toca baixo vê o site em âmbar; quem toca bateria vê em vermelho de luz
  *  de gravação. Os valores moram no CSS (index.css), selecionados por
- *  `data-instrumento` na raiz — assim o tema claro pode ter a versão escura de
- *  cada timbre sem nenhum JavaScript decidindo cor.
+ *  `data-timbre` — assim o tema claro pode ter a versão escura de cada timbre
+ *  sem nenhum JavaScript decidindo cor. O mesmo atributo funciona em qualquer
+ *  elemento, então uma ferramenta pode vestir outro timbre no seu próprio
+ *  pedaço sem repintar o site.
  *
  *  IMPORTANTE: dois dos timbres são quentes, da mesma família do latão. Eles
  *  dão identidade, não profundidade. Quem dá profundidade é o par
@@ -48,7 +50,7 @@ export function instrumentoSalvo(): TrilhaInstrumento {
 
 /** Pinta a raiz. Chamar sempre que o instrumento mudar — inclusive na carga. */
 export function aplicarTimbre(instrumento: TrilhaInstrumento = instrumentoSalvo()): void {
-  document.documentElement.dataset.instrumento = instrumento
+  document.documentElement.dataset.timbre = instrumento
 }
 
 /** Lê a cor efetiva do timbre agora (já resolvida pelo tema).

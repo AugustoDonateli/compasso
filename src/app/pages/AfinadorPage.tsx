@@ -43,10 +43,22 @@ export function AfinadorPage() {
   }, [leitura, afinacao])
 
   const afinado = leitura ? estaAfinado(leitura.cents) : false
-  const cor = !leitura ? '#8a8075' : afinado ? '#6e8f5a' : '#e0a34a'
+
+  /* Três estados, três cores, e cada uma quer dizer uma coisa:
+       sem sinal  → apagado, o mostrador está esperando
+       soando     → o TIMBRE do instrumento, porque o som está acontecendo
+       afinado    → sálvia, o sinal de "certo" que o site usa em toda parte
+     A versão anterior usava latão pra "soando", que é a cor do site — então
+     o mostrador nunca parecia estar reagindo a VOCÊ. */
+  const cor = !leitura ? '#8a8075' : afinado ? 'var(--ok)' : 'var(--timbre)'
 
   return (
-    <div className="min-h-screen pt-[var(--altura-nav)] bg-[#12100e] text-[#f2ede6]">
+    <div
+      /* a página inteira do afinador veste o timbre do instrumento escolhido
+         AQUI, sem mexer no instrumento da trilha */
+      data-timbre={afinacao.id}
+      className="min-h-screen bg-[#12100e] pt-[var(--altura-nav)] text-[#f2ede6]"
+    >
       <header className="flex items-center justify-between px-5 py-5 md:px-10">
         <span />
         <span className="type-label text-[#8a8075]">ferramenta 05</span>
@@ -65,14 +77,14 @@ export function AfinadorPage() {
         </p>
 
         {/* instrumento */}
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex w-full min-w-0 flex-col gap-2 md:w-auto md:flex-row md:items-center md:gap-3">
           <span className="type-label text-[#8a8075]">instrumento</span>
-          <div className="flex flex-wrap border border-[#332d27]">
+          <div className="relevo flex max-w-full overflow-x-auto border border-[#332d27]">
             {AFINACOES.map((a, k) => (
               <button
                 key={a.id}
                 onClick={() => setInstrumento(k)}
-                className={`type-label px-4 py-3 transition-colors ${k > 0 ? 'border-l border-[#332d27]' : ''} ${
+                className={`type-label flex min-h-11 shrink-0 items-center px-4 transition-colors ${k > 0 ? 'border-l border-[#332d27]' : ''} ${
                   instrumento === k
                     ? 'bg-[#e0a34a] text-[#12100e]'
                     : 'text-[#a69c90] hover:bg-[#f2ede6]/5 hover:text-[#f2ede6]'
@@ -84,8 +96,9 @@ export function AfinadorPage() {
           </div>
         </div>
 
-        {/* o mostrador */}
-        <div className="mt-10 border border-[#332d27] bg-[#1b1815] p-6 md:p-10">
+        {/* o mostrador: painel que SOBE da página (sombra fria + luz na aresta
+            de cima), com a tela AFUNDADA dentro dele. Era uma borda de 1px. */}
+        <div className="relevo-alto mt-10 border border-[#332d27] bg-[#1b1815] p-6 md:p-10">
           {estado !== 'ouvindo' ? (
             <div className="py-10 text-center">
               <p className="type-display text-2xl text-[#f2ede6] md:text-3xl">
@@ -105,18 +118,34 @@ export function AfinadorPage() {
               <button
                 onClick={() => void ouvir()}
                 disabled={estado === 'pedindo'}
-                className="type-label mt-8 border-2 border-[#e0a34a] bg-[#e0a34a] px-10 py-5 text-[#12100e] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                className="relevo type-label mt-8 border-2 border-[#e0a34a] bg-[#e0a34a] px-10 py-5 text-[#12100e] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
               >
                 {estado === 'pedindo' ? 'pedindo permissão…' : '🎤 ligar o microfone'}
               </button>
             </div>
           ) : (
             <>
-              {/* nota detectada */}
-              <div className="text-center">
+              {/* A TELA. Fundo mais escuro que o painel e sombra pra dentro:
+                  é assim que um mostrador afundado se comporta. A nota EMITE
+                  luz (o halo vaza pro entorno) em vez de estar pintada, e
+                  quando afina o halo abre. É o único pico visual da página. */}
+              <div
+                className="relative overflow-hidden bg-[#0d0b09] px-4 py-8 text-center transition-shadow duration-300"
+                style={{
+                  boxShadow: leitura
+                    ? `inset 0 2px 14px rgb(0 0 0 / 0.75), inset 0 0 ${afinado ? 90 : 60}px -20px ${cor}`
+                    : 'inset 0 2px 14px rgb(0 0 0 / 0.75)',
+                }}
+              >
                 <div
-                  className="type-display leading-none transition-colors duration-200"
-                  style={{ fontSize: 'clamp(4rem, 14vw, 9rem)', color: cor }}
+                  className={`type-display leading-none transition-colors duration-200 ${afinado ? 'anim-acerto' : ''}`}
+                  style={{
+                    fontSize: 'clamp(4rem, 14vw, 9rem)',
+                    color: cor,
+                    textShadow: leitura
+                      ? `0 0 ${afinado ? 60 : 34}px color-mix(in srgb, ${cor} 55%, transparent)`
+                      : 'none',
+                  }}
                 >
                   {leitura ? noteSolfejo(spellPc(midiToPc(leitura.midi))) : '—'}
                 </div>
@@ -125,27 +154,44 @@ export function AfinadorPage() {
                     ? `${midiToName(leitura.midi)} · ${leitura.freq.toFixed(1)} Hz`
                     : 'toque uma corda'}
                 </div>
-              </div>
 
-              {/* ponteiro de cents */}
-              <div className="relative mt-10 h-16">
-                <div className="absolute inset-x-0 top-1/2 h-px bg-[#332d27]" />
-                {/* zona afinada */}
-                <div
-                  className="absolute top-1/2 h-10 -translate-y-1/2 border-x border-[#6e8f5a]/50 bg-[#6e8f5a]/10"
-                  style={{ left: `${posicao(-5)}%`, width: `${posicao(5) - posicao(-5)}%` }}
-                />
-                {/* centro */}
-                <div className="absolute left-1/2 top-1/2 h-12 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[#a69c90]" />
-                {/* agulha */}
-                {leitura && (
+                {/* ponteiro de cents, dentro da tela */}
+                <div className="relative mx-auto mt-8 h-16 max-w-md">
+                  <div className="absolute inset-x-0 top-1/2 h-px bg-[#332d27]" />
+                  {/* a zona afinada ACENDE quando você entra nela: o alvo
+                      responde, em vez de só existir parado */}
                   <div
-                    className="absolute top-1/2 h-16 w-1 -translate-x-1/2 -translate-y-1/2 transition-all duration-100"
-                    style={{ left: `${posicao(leitura.cents)}%`, backgroundColor: cor }}
+                    className="absolute top-1/2 h-10 -translate-y-1/2 border-x transition-all duration-200"
+                    style={{
+                      left: `${posicao(-5)}%`,
+                      width: `${posicao(5) - posicao(-5)}%`,
+                      borderColor: afinado
+                        ? 'var(--ok)'
+                        : 'color-mix(in srgb, var(--ok) 40%, transparent)',
+                      background: afinado
+                        ? 'color-mix(in srgb, var(--ok) 22%, transparent)'
+                        : 'color-mix(in srgb, var(--ok) 8%, transparent)',
+                      boxShadow: afinado
+                        ? '0 0 26px -4px color-mix(in srgb, var(--ok) 70%, transparent)'
+                        : 'none',
+                    }}
                   />
-                )}
-                <span className="type-label absolute left-0 top-0 text-[#8a8075]">baixo</span>
-                <span className="type-label absolute right-0 top-0 text-[#8a8075]">alto</span>
+                  {/* centro */}
+                  <div className="absolute left-1/2 top-1/2 h-12 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-[#a69c90]" />
+                  {/* agulha: emite luz, não é um retângulo colorido */}
+                  {leitura && (
+                    <div
+                      className="absolute top-1/2 h-16 w-1 -translate-x-1/2 -translate-y-1/2 transition-all duration-100"
+                      style={{
+                        left: `${posicao(leitura.cents)}%`,
+                        backgroundColor: cor,
+                        boxShadow: `0 0 14px 1px color-mix(in srgb, ${cor} 70%, transparent)`,
+                      }}
+                    />
+                  )}
+                  <span className="type-label absolute left-0 top-0 text-[#8a8075]">baixo</span>
+                  <span className="type-label absolute right-0 top-0 text-[#8a8075]">alto</span>
+                </div>
               </div>
 
               <p className="mt-6 text-center text-lg" style={{ color: cor }}>
@@ -167,13 +213,20 @@ export function AfinadorPage() {
                     return (
                       <div
                         key={k}
-                        className={`flex min-w-20 flex-col items-center border px-4 py-3 transition-colors ${
-                          ativa && afinado
-                            ? 'border-[#6e8f5a] bg-[#6e8f5a]/15'
-                            : ativa
-                              ? 'border-[#e0a34a] bg-[#e0a34a]/10'
-                              : 'border-[#332d27]'
+                        /* a corda que você está afinando acende junto com o
+                           mostrador — o painel inteiro reage a um gesto só */
+                        className={`relevo flex min-w-20 flex-col items-center border px-4 py-3 transition-all duration-200 ${
+                          ativa && afinado ? 'led' : ''
                         }`}
+                        style={{
+                          borderColor: ativa && afinado ? 'var(--ok)' : ativa ? 'var(--timbre)' : '#332d27',
+                          background:
+                            ativa && afinado
+                              ? 'color-mix(in srgb, var(--ok) 16%, transparent)'
+                              : ativa
+                                ? 'color-mix(in srgb, var(--timbre) 12%, transparent)'
+                                : 'transparent',
+                        }}
                       >
                         <span className="type-display text-2xl">
                           {noteSolfejo(spellPc(midiToPc(m)))}
