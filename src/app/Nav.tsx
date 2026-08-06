@@ -86,15 +86,10 @@ export function Nav() {
           : 'pointer-events-none -translate-y-full opacity-0'
       }`}
     >
-      <div className="flex items-center justify-between px-5 py-3 md:px-10">
-        {/* o -my-3 py-3 estica a área de toque pros 44px de dedo sem esticar a
-            barra: o padding entra pra quem toca, a margem negativa devolve pro
-            layout. A marca continua ocupando os mesmos 20px na tela. */}
-        <Link
-          to="/"
-          className="-my-3 flex items-center gap-3 py-3"
-          aria-label="Compasso, início"
-        >
+      {/* a barra reserva --altura-nav e as páginas descontam a MESMA variável.
+          Dentro dela, cada alvo pode ter os 44px de dedo sem empurrar nada. */}
+      <div className="flex min-h-[var(--altura-nav)] items-center justify-between px-5 md:px-10">
+        <Link to="/" className="flex items-center gap-3 py-3" aria-label="Compasso, início">
           {/* a marca: as duas hastes da barra de compasso */}
           <span className="flex h-5 items-end gap-1">
             <span className="block h-5 w-[3px] bg-brass" />
@@ -118,11 +113,10 @@ export function Nav() {
           ))}
         </div>
 
-        {/* mobile: menu, porque 5 links não cabem em 375px.
-            Mesmo truque da marca: 44px de alvo, barra do mesmo tamanho. */}
+        {/* mobile: menu, porque 5 links não cabem em 375px */}
         <button
           onClick={() => setMenuAberto((v) => !v)}
-          className="type-label -my-2 flex min-h-11 items-center border border-line px-4 text-ink-2 md:hidden"
+          className="type-label flex min-h-11 items-center border border-line px-4 text-ink-2 md:hidden"
           aria-expanded={menuAberto}
         >
           {menuAberto ? 'fechar' : 'menu'}

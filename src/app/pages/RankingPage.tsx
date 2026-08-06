@@ -61,7 +61,7 @@ export function RankingPage() {
   const euNaLista = lista?.find((c) => c.apelido === apelido) ?? null
 
   return (
-    <div className="min-h-screen bg-[#12100e] pt-14 text-[#f2ede6]">
+    <div className="min-h-screen bg-[#12100e] pt-[var(--altura-nav)] text-[#f2ede6]">
       <header className="flex items-center justify-end px-5 py-5 md:px-10">
         <span className="type-label text-[#8a8075]">entre amigos</span>
       </header>

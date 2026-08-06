@@ -26,7 +26,20 @@
   --ok: #6e8f5a;
   --err: #b2543c;
 
+  /* Altura da barra fixa. UM número, num lugar só: a barra reserva essa
+     altura e as páginas descontam ela do topo. Antes eram sete `pt-14`
+     copiados, então mudar a barra descolava sete páginas de uma vez —
+     e foi exatamente o que aconteceu ao dar 44px de dedo aos botões.
+     56px cabe o alvo de 44px com folga. */
+  --altura-nav: 3.5rem;
+
   color-scheme: dark;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --altura-nav: 4rem;
+  }
 }
 
 :root[data-theme='light'] {

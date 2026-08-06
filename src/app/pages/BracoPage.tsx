@@ -139,7 +139,7 @@ export function BracoPage() {
   const contextual = mode === 'escala' || mode === 'acorde'
 
   return (
-    <div className="min-h-screen pt-14 bg-[#171310] text-[#f2ede6]">
+    <div className="min-h-screen pt-[var(--altura-nav)] bg-[#171310] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
         <span />
         <span className="type-label text-[#6e655c]">ferramenta 01</span>

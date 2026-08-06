@@ -107,7 +107,7 @@ export function TrilhaPage() {
   const nomeInstrumento = INSTRUMENTOS.find((x) => x.id === som)?.nome ?? som
 
   return (
-    <div className="min-h-screen pt-14 bg-[#12100e] text-[#f2ede6]">
+    <div className="min-h-screen pt-[var(--altura-nav)] bg-[#12100e] text-[#f2ede6]">
       {/* uma linha só de contexto — nada de grade de placar competindo */}
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#221e1a] px-5 py-5 md:px-10">
         <span />

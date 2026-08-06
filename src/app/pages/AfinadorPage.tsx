@@ -46,7 +46,7 @@ export function AfinadorPage() {
   const cor = !leitura ? '#8a8075' : afinado ? '#6e8f5a' : '#e0a34a'
 
   return (
-    <div className="min-h-screen pt-14 bg-[#12100e] text-[#f2ede6]">
+    <div className="min-h-screen pt-[var(--altura-nav)] bg-[#12100e] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 py-5 md:px-10">
         <span />
         <span className="type-label text-[#8a8075]">ferramenta 05</span>
