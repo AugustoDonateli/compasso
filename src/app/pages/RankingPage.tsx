@@ -43,7 +43,8 @@ export function RankingPage() {
     void sincronizar().then(() => void carregar())
   }, [carregar])
 
-  const salvar = async () => {
+  const salvar = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     setSalvando(true)
     setErro(null)
     const r = await definirApelido(rascunho, localStorage.getItem('compasso.instrumento') ?? undefined)
@@ -105,23 +106,29 @@ export function RankingPage() {
               Só isso. Nada de e-mail nem senha — o apelido serve só pra seus amigos te
               reconhecerem aqui. Sem apelido, você continua usando o site normalmente.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            {/* form de verdade, não div com onKeyDown: no celular é isso que
+                põe o botão "ir" no teclado em vez de uma tecla de enter que
+                não faz nada */}
+            <form onSubmit={(e) => void salvar(e)} className="mt-6 flex flex-wrap gap-3">
               <input
                 value={rascunho}
                 onChange={(e) => setRascunho(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && void salvar()}
                 placeholder="seu apelido"
                 maxLength={24}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="go"
                 className="min-w-48 flex-1 border border-[#332d27] bg-[#12100e] px-4 py-4 text-lg text-[#f2ede6] outline-none focus:border-[#e0a34a]"
               />
               <button
-                onClick={() => void salvar()}
+                type="submit"
                 disabled={salvando || rascunho.trim().length < 2}
                 className="type-label border-2 border-[#e0a34a] bg-[#e0a34a] px-8 py-4 text-[#12100e] transition-opacity disabled:opacity-40"
               >
                 {salvando ? 'salvando…' : 'entrar'}
               </button>
-            </div>
+            </form>
             {erro && <p className="mt-3 text-[#b2543c]">{erro}</p>}
           </div>
         ) : (
