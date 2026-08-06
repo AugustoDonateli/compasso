@@ -60,16 +60,88 @@ export function Calibrador({ foto }: { foto: string }) {
     })
     .join('\n')
 
+  const baixar = () => {
+    /* Baixar em vez de só copiar: o arquivo cai na pasta de Downloads e eu
+       consigo ler ele direto do disco. Um passo a menos pro Augusto do que
+       selecionar texto na tela e colar no chat. */
+    const url = URL.createObjectURL(new Blob([codigo], { type: 'text/plain' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'quarto-calibrado.txt'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const refazer = () => {
+    if (!papel) return
+    setPontos([])
+    setProntos((p) => {
+      const c = { ...p }
+      delete c[papel.id]
+      return c
+    })
+  }
+
+  const voltar = () => {
+    if (i === 0) return
+    const anterior = PAPEIS[i - 1]
+    setPontos([])
+    setProntos((p) => {
+      const c = { ...p }
+      delete c[anterior.id]
+      return c
+    })
+    setI(i - 1)
+  }
+
   return (
     <div className="min-h-screen bg-base p-5 text-ink">
       <p className="type-label text-brass">
         {papel
           ? `contorne: ${papel.nome} (${papel.id}) — ${i + 1} de ${PAPEIS.length}`
-          : 'todos contornados'}
+          : `todos os ${PAPEIS.length} contornados`}
       </p>
       <p className="type-label mt-1 text-ink-2">
-        clique em volta do objeto · enter fecha a forma · backspace desfaz · esc limpa
+        clique em volta do objeto · enter fecha a forma · backspace desfaz um ponto · esc limpa
       </p>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={fechar}
+          disabled={pontos.length < 3}
+          className="type-label flex min-h-11 items-center border border-brass px-4 text-brass disabled:opacity-35"
+        >
+          fechar forma (enter)
+        </button>
+        <button
+          onClick={refazer}
+          className="type-label flex min-h-11 items-center border border-line px-4 text-ink-2"
+        >
+          refazer este
+        </button>
+        <button
+          onClick={voltar}
+          disabled={i === 0}
+          className="type-label flex min-h-11 items-center border border-line px-4 text-ink-2 disabled:opacity-35"
+        >
+          voltar um
+        </button>
+        <button
+          onClick={baixar}
+          disabled={!codigo}
+          className="type-label flex min-h-11 items-center border-2 border-brass bg-brass px-5 text-base disabled:opacity-35"
+          style={{ color: 'var(--bg-base)' }}
+        >
+          ⤓ baixar o arquivo
+        </button>
+        <button
+          onClick={() => void navigator.clipboard.writeText(codigo)}
+          disabled={!codigo}
+          className="type-label flex min-h-11 items-center border border-line px-4 text-ink-2 disabled:opacity-35"
+        >
+          copiar
+        </button>
+      </div>
 
       <div className="relative mt-4 inline-block select-none">
         <img src={foto} alt="" onClick={clicar} className="block max-w-full cursor-crosshair" />
