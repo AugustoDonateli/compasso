@@ -33,6 +33,27 @@ export interface ObjetoDoQuarto {
   so?: TrilhaInstrumento[]
 }
 
+/** A caixa que envolve a silhueta, com folga.
+ *
+ *  É ELA que recebe a luz, não a silhueta. Clarear exatamente o contorno
+ *  produz uma borda dura que entrega o truque na hora — luz de verdade não
+ *  tem contorno, ela vaza. A silhueta continua servindo pro clique, que
+ *  precisa ser preciso; a luz usa a caixa com folga e desbota nas pontas. */
+export function caixaDe(
+  forma: Array<[number, number]>,
+  folga = 0.45,
+): { x: number; y: number; l: number; a: number } {
+  const xs = forma.map((p) => p[0])
+  const ys = forma.map((p) => p[1])
+  const x0 = Math.min(...xs)
+  const x1 = Math.max(...xs)
+  const y0 = Math.min(...ys)
+  const y1 = Math.max(...ys)
+  const l = x1 - x0
+  const a = y1 - y0
+  return { x: x0 - l * folga, y: y0 - a * folga, l: l * (1 + folga * 2), a: a * (1 + folga * 2) }
+}
+
 /** O ponto onde o rótulo do objeto aparece: o centro da silhueta. */
 export function centro(forma: Array<[number, number]>): [number, number] {
   const n = forma.length

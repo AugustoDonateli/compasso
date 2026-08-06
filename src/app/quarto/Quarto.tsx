@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  caixaDe,
   centro,
   paraTela,
   clipPath,
@@ -14,18 +15,21 @@ import { getProgress } from '../../progress'
 
 /* O quarto interativo.
 
-   COMO O BRILHO FUNCIONA, já que essa foi a primeira dúvida do Augusto: não
-   são duas imagens sobrepostas. IA generativa não devolve o mesmo quarto duas
-   vezes com só a luz mudada — seriam dois quartos parecidos e tudo escorrega
-   no cruzamento.
+   DUAS COISAS DIFERENTES USAM A SILHUETA, e é importante não confundir:
 
-   É a MESMA foto, uma vez só, recortada em silhueta com `clip-path` e
-   clareada. Como a camada recortada tem exatamente o tamanho da foto de baixo,
-   ela encaixa pixel a pixel. Sete silhuetas, uma imagem, e o halo pode usar o
-   timbre do instrumento de quem está tocando.
+   O CLIQUE usa o contorno exato, com `clip-path`. Precisa ser preciso, e como
+   é invisível, borda dura não custa nada.
 
-   E `clip-path` também recorta o clique, então a área sensível é a silhueta do
-   objeto, não um retângulo em volta dele. */
+   A LUZ NÃO. A primeira versão recortava a foto na silhueta e clareava o
+   recorte — e a borda dura entregava o truque na hora: dava pra ver que
+   alguém tinha cortado a imagem. Luz de verdade não tem contorno, ela vaza.
+   Então a luz mora numa CAIXA com folga em volta do objeto, clareia o que
+   está embaixo com `backdrop-filter` e desbota nas pontas com uma máscara
+   radial. É uma lâmpada acendendo, não um decalque.
+
+   (E não são duas fotos sobrepostas: IA generativa não devolve o mesmo quarto
+   duas vezes com só a luz mudada — seriam dois quartos parecidos e tudo
+   escorregaria no cruzamento.) */
 
 export interface Foto {
   padrao: string
@@ -102,32 +106,58 @@ export function Quarto({ foto, retrato }: Props) {
         style={{ opacity: aceso ? 0.55 : 0 }}
       />
 
-      {visiveis.map((o) => {
+      {visiveis.map((o, i) => {
         const on = aceso === o.id
         const livre = disponivel(o)
         const naT = naTela(o.forma)
         const [cx, cy] = centro(naT)
+        const cx100 = caixaDe(naT)
         return (
           <div key={o.id}>
-            {/* a mesma foto, recortada na silhueta e clareada */}
+            {/* A LUZ. Não é a foto recortada e clareada — isso deixava uma
+                borda dura que entregava o truque. É uma lâmpada acendendo
+                sobre o objeto: clareia o que está EMBAIXO (backdrop-filter) e
+                desbota nas pontas com uma máscara radial. Nenhum contorno.
+
+                Em repouso ela fica fraca e respirando devagar, cada objeto no
+                seu tempo, pra que a penumbra tenha sete coisas vivas em vez de
+                sete coisas apagadas. */}
             <div
-              className="pointer-events-none absolute inset-0 transition-opacity duration-500"
-              style={{ clipPath: clipPath(naT), opacity: on ? 1 : livre ? 0.22 : 0 }}
-            >
-              <img
-                src={foto.padrao}
-                srcSet={foto.conjunto}
-                sizes="100vw"
-                alt=""
-                aria-hidden
-                className="h-screen w-full object-cover"
-                style={{
-                  filter: on
-                    ? 'brightness(1.75) saturate(1.15)'
-                    : 'brightness(1.25) saturate(1.05)',
-                }}
-              />
-            </div>
+              className={`pointer-events-none absolute transition-all duration-700 ${
+                !on && livre ? 'anim-respira' : ''
+              }`}
+              style={{
+                left: `${cx100.x * 100}%`,
+                top: `${cx100.y * 100}%`,
+                width: `${cx100.l * 100}%`,
+                height: `${cx100.a * 100}%`,
+                opacity: livre ? (on ? 1 : 0.5) : 0,
+                animationDelay: `${i * 1.3}s`,
+                backdropFilter: on
+                  ? 'brightness(2.1) saturate(1.25)'
+                  : 'brightness(1.35) saturate(1.08)',
+                WebkitBackdropFilter: on ? 'brightness(2.1)' : 'brightness(1.35)',
+                maskImage:
+                  'radial-gradient(ellipse at center, #000 22%, rgba(0,0,0,0.55) 45%, transparent 72%)',
+                WebkitMaskImage:
+                  'radial-gradient(ellipse at center, #000 22%, rgba(0,0,0,0.55) 45%, transparent 72%)',
+              }}
+            />
+
+            {/* o calor da lâmpada por cima, no timbre de quem toca */}
+            <div
+              className="pointer-events-none absolute transition-opacity duration-700"
+              style={{
+                left: `${cx100.x * 100}%`,
+                top: `${cx100.y * 100}%`,
+                width: `${cx100.l * 100}%`,
+                height: `${cx100.a * 100}%`,
+                opacity: on ? 0.5 : 0,
+                background:
+                  'radial-gradient(ellipse at center, color-mix(in srgb, var(--timbre) 34%, transparent) 0%, transparent 68%)',
+                mixBlendMode: 'screen',
+              }}
+            />
 
             {/* o rótulo só existe quando o objeto acende — no toque ele
                 aparece junto, porque em tela sensível não há passar o mouse */}
