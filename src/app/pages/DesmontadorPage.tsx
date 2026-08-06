@@ -73,6 +73,7 @@ export function DesmontadorPage() {
   const [tocando, setTocando] = useState(false)
   const [tempo, setTempo] = useState(0)
   const [editando, setEditando] = useState<number | null>(null)
+  const [semAudio, setSemAudio] = useState(false)
   const pararRef = useRef<(() => void) | null>(null)
 
   /* Refs espelhando o estado: o callback agendado no transporte captura o
@@ -148,7 +149,14 @@ export function DesmontadorPage() {
       parar()
       return
     }
-    await ensureAudio()
+    /* Se o navegador não liberou o áudio, falhe À VISTA. Antes o botão virava
+       "parar", nada soava e nada andava — que é indistinguível de bug e foi
+       exatamente como o defeito do contexto suspenso chegou até aqui. */
+    if (!(await ensureAudio())) {
+      setSemAudio(true)
+      return
+    }
+    setSemAudio(false)
     const m = musicaRef.current
     const [harmonia, baixo, kit] = await Promise.all([
       getInstrument(m.som),
@@ -323,6 +331,12 @@ export function DesmontadorPage() {
               {noteSolfejo(spellPc(musica.tonica))} {musica.modo}
             </span>
           </div>
+
+          {semAudio && (
+            <p className="mt-4 border-l-2 border-[#b2543c] pl-4 text-[#b2543c]">
+              O navegador não liberou o áudio. Toque na página uma vez e aperte tocar de novo.
+            </p>
+          )}
 
           {/* AS PISTAS — o coração da coisa. Ligam e desligam tocando. */}
           <div className="mt-7 border-t border-[#332d27] pt-6">
