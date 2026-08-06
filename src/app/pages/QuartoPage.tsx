@@ -21,8 +21,9 @@ import { Quarto } from '../quarto/Quarto'
    Numa imagem de fundo em tela cheia, o menor candidato tem que ser grande
    o bastante pra tela mais comum, senão a economia vira defeito visível. */
 const DESKTOP = {
-  padrao: '/assets/img/quarto-desktop-1376.webp',
-  conjunto: '/assets/img/quarto-desktop-1376.webp 1376w',
+  padrao: '/assets/img/quarto-desktop-1920.webp',
+  conjunto:
+    '/assets/img/quarto-desktop-1440.webp 1440w, /assets/img/quarto-desktop-1920.webp 1920w, /assets/img/quarto-desktop-2560.webp 2560w',
 }
 const MOBILE = {
   padrao: '/assets/img/quarto-mobile-1400.webp',
