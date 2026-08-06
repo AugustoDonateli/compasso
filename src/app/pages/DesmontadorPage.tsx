@@ -1,50 +1,120 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   duracaoEmTempos,
+  linkDoOriginal,
   MUSICAS,
+  PASSOS,
   pcDoGrau,
   qualidadeDoGrau,
   qualidadeDoTrecho,
   romano,
   romanoDoTrecho,
+  semOTruque,
+  temTruque,
   trechoNoTempo,
+  trocarAcorde,
   type Musica,
+  type Trecho,
 } from '../../content/musicas'
 import { Fretboard } from '../../tools/fretboard/Fretboard'
 import { TUNINGS } from '../../theory/fretboard'
-import { chordPcs, type NoteRole } from '../../theory/chords'
+import { chordPcs, type ChordQuality, type NoteRole } from '../../theory/chords'
 import { midiToName, noteSolfejo, spellPc, type PitchClass } from '../../theory/notes'
-import { getInstrument, preloadInstrument } from '../../audio/instruments'
+import { getDrumKit, getInstrument, preloadDrumKit, preloadInstrument } from '../../audio/instruments'
+import type { DrumPiece } from '../../audio/instruments'
 import { ensureAudio, Tone } from '../../audio/engine'
 
 /* ┃ferramenta 03┃ Desmontador de músicas.
-   A resposta direta pra dor nº2: "estudei a apostila e na hora de tocar não
-   muda nada". Aqui a mesma sequência de graus que você viu na trilha aparece
-   tocando dentro de uma música que você reconhece.
 
-   Sem letra, sem melodia, sem áudio de gravação nenhuma: só a harmonia,
-   tocada com os samples do próprio site. */
+   O QUE ESTAVA ERRADO: a ferramenta tocava quatro blocos de som e escrevia
+   parágrafos. A lição do Creep chegava a dizer "toca a sequência com o quarto
+   acorde maior e depois menor e sente a diferença" — mandando a pessoa
+   experimentar por conta, tendo um tocador na tela. Isso é um vídeo com
+   passos a mais.
+
+   O QUE ELA FAZ AGORA, e que vídeo nenhum faz:
+   1. toca com LEVADA e BATERIA, então soa como música e não como exercício
+   2. as três pistas ligam e desligam AO VIVO — tira a harmonia e sobra o
+      verso do Teen Spirit, que é literalmente baixo e bateria
+   3. qualquer acorde é trocável no meio da execução: você ouve a teoria
+      quebrar em vez de ler que ela existe
+   4. um botão desliga o truque da música e devolve a versão óbvia dela */
 
 const GRAUS = [1, 2, 3, 4, 5, 6, 7]
+const PECAS: DrumPiece[] = ['chimbal', 'caixa', 'tom', 'bumbo']
+/* Só as três tríades do campo harmônico. ChordQuality conhece sétimas e
+   aumentado, mas o editor existe pra ensinar a diferença que se ouve de
+   primeira — maior soa aberto, menor soa fechado — e uma lista de nove opções
+   afogaria justamente isso. */
+const QUALIDADES = ['maior', 'menor', 'diminuto'] as const satisfies readonly ChordQuality[]
+const NOME_DA_QUALIDADE: Record<(typeof QUALIDADES)[number], string> = {
+  maior: 'maior',
+  menor: 'menor',
+  diminuto: 'dim',
+}
+
+type Pistas = { harmonia: boolean; baixo: boolean; bateria: boolean }
+const TODAS: Pistas = { harmonia: true, baixo: true, bateria: true }
+
+const NOME_DA_PISTA: Record<keyof Pistas, string> = {
+  harmonia: 'harmonia',
+  baixo: 'baixo',
+  bateria: 'bateria',
+}
 
 export function DesmontadorPage() {
   const [musica, setMusica] = useState<Musica>(MUSICAS[0])
+  const [progressao, setProgressao] = useState<Trecho[]>(MUSICAS[0].progressao)
+  const [pistas, setPistas] = useState<Pistas>(TODAS)
+  const [fator, setFator] = useState(1) // 0,5 a 1 do andamento original
   const [tocando, setTocando] = useState(false)
   const [tempo, setTempo] = useState(0)
+  const [editando, setEditando] = useState<number | null>(null)
   const pararRef = useRef<(() => void) | null>(null)
 
+  /* Refs espelhando o estado: o callback agendado no transporte captura o
+     valor do momento em que foi criado. Sem isso, desligar o baixo ou trocar
+     um acorde só faria efeito depois de parar e tocar de novo — e mexer
+     enquanto toca é a ferramenta inteira. */
+  const pistasRef = useRef(pistas)
+  pistasRef.current = pistas
+  const progRef = useRef(progressao)
+  progRef.current = progressao
+  const musicaRef = useRef(musica)
+  musicaRef.current = musica
+
   useEffect(() => {
-    preloadInstrument('guitarra')
-    return () => pararRef.current?.()
-  }, [])
+    preloadInstrument(musica.som)
+    preloadInstrument('baixo')
+    preloadDrumKit()
+  }, [musica.som])
+
+  useEffect(() => () => pararRef.current?.(), [])
+
+  // o andamento acompanha o cursor sem interromper o que está tocando
+  useEffect(() => {
+    if (tocando) Tone.getTransport().bpm.value = Math.round(musica.bpm * fator)
+  }, [fator, tocando, musica.bpm])
+
+  const editado = useMemo(
+    () =>
+      progressao.length !== musica.progressao.length ||
+      progressao.some((t, i) => {
+        const o = musica.progressao[i]
+        return t.grau !== o.grau || qualidadeDoTrecho(musica, t) !== qualidadeDoTrecho(musica, o)
+      }),
+    [progressao, musica],
+  )
 
   const trechoAtual = tocando ? trechoNoTempo(musica, tempo) : -1
-  const grauAtual = trechoAtual >= 0 ? musica.progressao[trechoAtual].grau : null
+  const trechoVisivel = editando ?? (trechoAtual >= 0 ? trechoAtual : -1)
+  const grauAtual = trechoVisivel >= 0 ? progressao[trechoVisivel]?.grau ?? null : null
   const pcAtual = grauAtual ? pcDoGrau(musica, grauAtual) : null
   const qualidadeAtual =
-    trechoAtual >= 0 ? qualidadeDoTrecho(musica, musica.progressao[trechoAtual]) : null
+    trechoVisivel >= 0 && progressao[trechoVisivel]
+      ? qualidadeDoTrecho(musica, progressao[trechoVisivel])
+      : null
 
-  /** as notas do acorde que está soando — pra acender no braço */
   const notasDoAcorde = useMemo(
     () => (pcAtual !== null && qualidadeAtual ? chordPcs(pcAtual, qualidadeAtual) : []),
     [pcAtual, qualidadeAtual],
@@ -69,46 +139,74 @@ export function DesmontadorPage() {
       return
     }
     await ensureAudio()
-    const guitarra = await getInstrument('guitarra')
+    const m = musicaRef.current
+    const [harmonia, baixo, kit] = await Promise.all([
+      getInstrument(m.som),
+      getInstrument('baixo'),
+      getDrumKit(),
+    ])
     const transport = Tone.getTransport()
-    transport.bpm.value = musica.bpm
+    transport.bpm.value = Math.round(m.bpm * fator)
 
-    const total = duracaoEmTempos(musica)
-    let t = 0
+    const totalPassos = duracaoEmTempos(m) * 4
+    // piano ataca junto; instrumento de corda é dedilhado, e é esse atraso de
+    // milissegundos entre as cordas que faz soar tocado em vez de sintetizado
+    const arpejo = m.som === 'piano' ? 0 : 0.028
+    let passo = 0
 
     const id = transport.scheduleRepeat((time) => {
-      const trecho = trechoNoTempo(musica, t)
-      const inicioDoTrecho =
-        musica.progressao.slice(0, trecho).reduce((s, x) => s + x.tempos, 0)
+      const p = passo % totalPassos
+      const noCompasso = p % PASSOS
+      const trecho = trechoNoTempo(m, Math.floor(p / 4))
+      const t = progRef.current[trecho]
+      const ligadas = pistasRef.current
+      if (!t) {
+        passo += 1
+        return
+      }
 
-      // dedilha o acorde só quando ele entra, não a cada tempo
-      if (t % total === inicioDoTrecho) {
-        const grau = musica.progressao[trecho].grau
-        const pcs = chordPcs(pcDoGrau(musica, grau), qualidadeDoTrecho(musica, musica.progressao[trecho]))
-        let prev = 48 + pcs[0]
-        const midis = pcs.map((pc, i) => {
-          if (i === 0) return prev
-          let m = prev - (prev % 12) + pc
-          if (m <= prev) m += 12
-          prev = m
-          return m
+      const pc = pcDoGrau(m, t.grau)
+
+      if (ligadas.harmonia && m.levada.includes(noCompasso)) {
+        const pcs = chordPcs(pc, qualidadeDoTrecho(m, t))
+        // empilha as notas subindo a partir da fundamental, como a mão faz
+        let anterior = 48 + pcs[0]
+        const midis = pcs.map((n, i) => {
+          if (i === 0) return anterior
+          let x = anterior - (anterior % 12) + n
+          if (x <= anterior) x += 12
+          anterior = x
+          return x
         })
-        midis.forEach((m, i) =>
-          guitarra.triggerAttackRelease(midiToName(m), 1.8, time + i * 0.04, 0.8),
+        const seg16 = 60 / (m.bpm * fator) / 4
+        const dur = Math.max(0.28, (PASSOS / m.levada.length) * seg16 * 0.9)
+        midis.forEach((x, i) =>
+          harmonia.triggerAttackRelease(midiToName(x), dur, time + i * arpejo, 0.75),
         )
       }
-      t += 1
-    }, '4n')
+
+      // o baixo faz o que baixo de música pop faz: a fundamental, no chão
+      if (ligadas.baixo && (noCompasso === 0 || noCompasso === 8)) {
+        baixo.triggerAttackRelease(midiToName(36 + pc), '4n', time, 0.9)
+      }
+
+      if (ligadas.bateria) {
+        for (const peca of PECAS) {
+          if (m.bateria[peca][noCompasso]) kit.player(peca).start(time)
+        }
+      }
+
+      passo += 1
+    }, '16n')
 
     transport.position = 0
     transport.start()
     setTocando(true)
 
-    /* O VISUAL lê a posição do transporte a cada quadro, em vez de consumir
-       uma fila agendada (Tone.Draw). Com a aba em segundo plano o rAF pausa;
-       uma fila acumularia eventos vencidos que são descartados, e o destaque
-       travaria ou pularia ao voltar. Lendo a posição, ele ressincroniza
-       sozinho no primeiro quadro. Mesma lição da Groove Machine. */
+    /* O visual lê a posição do transporte a cada quadro em vez de consumir uma
+       fila agendada (Tone.Draw). Com a aba em segundo plano o rAF pausa; a
+       fila acumularia eventos vencidos, que são descartados, e o destaque
+       travaria ao voltar. Lendo a posição, ressincroniza no primeiro quadro. */
     let raf = 0
     const desenhar = () => {
       raf = requestAnimationFrame(desenhar)
@@ -123,12 +221,20 @@ export function DesmontadorPage() {
       transport.stop()
       transport.position = 0
     }
-  }, [tocando, musica, parar])
+  }, [tocando, parar, fator])
 
   const trocar = (m: Musica) => {
     parar()
     setMusica(m)
+    setProgressao(m.progressao)
+    setPistas(TODAS)
+    setEditando(null)
+    setFator(1)
   }
+
+  const alternarPista = (p: keyof Pistas) => setPistas((v) => ({ ...v, [p]: !v[p] }))
+
+  const link = linkDoOriginal(musica)
 
   return (
     <div className="min-h-screen bg-[#12100e] pt-[var(--altura-nav)] text-[#f2ede6]">
@@ -144,9 +250,9 @@ export function DesmontadorPage() {
           Desmontador
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-[#a69c90]">
-          Músicas famosas abertas por dentro: a teoria que faz elas funcionarem, o que cada
-          instrumento está fazendo e{' '}
-          <span className="text-[#e0a34a]">a história de como nasceram</span>.
+          Músicas famosas abertas por dentro — e{' '}
+          <span className="text-[#e0a34a]">mexíveis</span>. Desligue um instrumento, troque um
+          acorde, ouça a teoria quebrar.
         </p>
 
         {/* escolher a música */}
@@ -172,82 +278,234 @@ export function DesmontadorPage() {
           ))}
         </div>
 
-        {/* o toca-discos */}
-        <div className="mt-10 border border-[#332d27] bg-[#1b1815] p-6 md:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* A MESA */}
+        <div className="relevo-alto mt-10 border border-[#332d27] bg-[#1b1815] p-5 md:p-8">
+          <div className="flex flex-wrap items-center gap-4">
             <button
               onClick={() => void tocar()}
-              className={`type-label border-2 px-8 py-5 transition-colors ${
+              className={`relevo type-label flex min-h-14 items-center border-2 px-8 transition-colors ${
                 tocando
                   ? 'border-[#e0a34a] bg-[#e0a34a] text-[#12100e]'
                   : 'border-[#e0a34a] text-[#e0a34a] hover:bg-[#e0a34a]/10'
               }`}
             >
-              {tocando ? '■ parar' : '▶ tocar a sequência'}
+              {tocando ? '■ parar' : '▶ tocar'}
             </button>
+
+            {/* devagar é onde a pessoa consegue acompanhar — e isso não é
+                enfeite, é a diferença entre ouvir e conseguir tocar junto */}
+            <label className="flex min-w-44 flex-1 items-center gap-3">
+              <span className="type-label whitespace-nowrap text-[#8a8075]">
+                {Math.round(musica.bpm * fator)} bpm
+              </span>
+              <input
+                type="range"
+                min={50}
+                max={100}
+                value={Math.round(fator * 100)}
+                onChange={(e) => setFator(Number(e.target.value) / 100)}
+                className="h-11 flex-1 accent-[var(--timbre)]"
+                aria-label="andamento"
+              />
+            </label>
+
             <span className="type-label text-[#8a8075]">
-              {noteSolfejo(spellPc(musica.tonica))} {musica.modo} · ♩ = {musica.bpm}
+              {noteSolfejo(spellPc(musica.tonica))} {musica.modo}
             </span>
           </div>
 
-          {/* a progressão em blocos, com o atual aceso */}
-          <div className="mt-8 flex flex-wrap gap-2">
-            {musica.progressao.map((t, i) => {
-              const ativo = i === trechoAtual
-              const pc = pcDoGrau(musica, t.grau)
-              return (
-                <div
-                  key={i}
-                  className={`min-w-24 flex-1 border px-4 py-5 text-center transition-all duration-150 ${
-                    ativo
-                      ? 'border-[#e0a34a] bg-[#e0a34a]/15'
-                      : 'border-[#332d27] bg-[#12100e]'
-                  }`}
-                  style={{ flexGrow: t.tempos }}
-                >
-                  <span
-                    className={`type-display block text-3xl ${ativo ? 'text-[#e0a34a]' : 'text-[#a69c90]'}`}
+          {/* AS PISTAS — o coração da coisa. Ligam e desligam tocando. */}
+          <div className="mt-7 border-t border-[#332d27] pt-6">
+            <span className="type-label text-[#8a8075]">
+              as pistas · desligue uma e ouça o que sobra
+            </span>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {(Object.keys(NOME_DA_PISTA) as Array<keyof Pistas>).map((p) => {
+                const on = pistas[p]
+                return (
+                  <button
+                    key={p}
+                    onClick={() => alternarPista(p)}
+                    aria-pressed={on}
+                    className={`relevo type-label flex min-h-11 items-center gap-3 border px-5 transition-all ${
+                      on ? 'led' : ''
+                    }`}
+                    style={{
+                      borderColor: on ? 'var(--timbre)' : '#332d27',
+                      color: on ? 'var(--timbre)' : '#8a8075',
+                      background: on ? 'color-mix(in srgb, var(--timbre) 10%, transparent)' : 'transparent',
+                    }}
                   >
-                    {romanoDoTrecho(musica, t)}
-                  </span>
-                  <span className="type-label mt-2 block text-[#8a8075]">
-                    {noteSolfejo(spellPc(pc))}
-                    {qualidadeDoTrecho(musica, t) === 'menor' ? 'm' : ''}
-                  </span>
-                  {/* acorde emprestado: é onde mora a mágica da música */}
-                  {t.emprestado && (
-                    <span className="type-label mt-2 block text-[#e0a34a]">emprestado</span>
-                  )}
-                </div>
-              )
-            })}
+                    <span
+                      className="block h-1.5 w-1.5 rounded-full transition-colors"
+                      style={{ background: on ? 'var(--timbre)' : '#332d27' }}
+                      aria-hidden
+                    />
+                    {p === 'harmonia' ? musica.som : NOME_DA_PISTA[p]}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
-          {/* explica cada empréstimo, se houver */}
-          {musica.progressao.some((t) => t.emprestado) && (
-            <div className="mt-6 space-y-2 border-t border-[#332d27] pt-5">
-              {musica.progressao.map(
-                (t, i) =>
-                  t.emprestado && (
-                    <p key={i} className="text-[#a69c90]">
-                      <span className="type-label mr-2 text-[#e0a34a]">
-                        {romanoDoTrecho(musica, t)}
-                      </span>
-                      {t.emprestado.porque}
-                    </p>
-                  ),
+          {/* A PROGRESSÃO — clicável */}
+          <div className="mt-7 border-t border-[#332d27] pt-6">
+            <span className="type-label text-[#8a8075]">
+              a sequência · toque num acorde pra trocar
+            </span>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {progressao.map((t, i) => {
+                const soando = i === trechoAtual
+                const aberto = i === editando
+                const pc = pcDoGrau(musica, t.grau)
+                const mudou =
+                  musica.progressao[i] &&
+                  (t.grau !== musica.progressao[i].grau ||
+                    qualidadeDoTrecho(musica, t) !==
+                      qualidadeDoTrecho(musica, musica.progressao[i]))
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setEditando(aberto ? null : i)}
+                    className="relevo min-w-24 flex-1 border px-4 py-5 text-center transition-all duration-150"
+                    style={{
+                      flexGrow: t.tempos,
+                      borderColor: soando || aberto ? 'var(--timbre)' : '#332d27',
+                      background: soando
+                        ? 'color-mix(in srgb, var(--timbre) 16%, transparent)'
+                        : '#12100e',
+                    }}
+                  >
+                    <span
+                      className="type-display block text-3xl"
+                      style={{ color: soando || aberto ? 'var(--timbre)' : '#a69c90' }}
+                    >
+                      {romanoDoTrecho(musica, t)}
+                    </span>
+                    <span className="type-label mt-2 block text-[#8a8075]">
+                      {noteSolfejo(spellPc(pc))}
+                      {qualidadeDoTrecho(musica, t) === 'menor'
+                        ? 'm'
+                        : qualidadeDoTrecho(musica, t) === 'diminuto'
+                          ? '°'
+                          : ''}
+                    </span>
+                    {mudou ? (
+                      <span className="type-label mt-2 block text-[#b2543c]">trocado</span>
+                    ) : t.emprestado ? (
+                      <span className="type-label mt-2 block text-[#e0a34a]">emprestado</span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* o editor do acorde escolhido */}
+            {editando !== null && progressao[editando] && (
+              <div className="mt-4 border border-[#332d27] bg-[#12100e] p-4 md:p-5">
+                <span className="type-label text-[#8a8075]">
+                  acorde {editando + 1} · escolha o grau e a qualidade
+                </span>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {GRAUS.map((g) => (
+                    <button
+                      key={g}
+                      onClick={() =>
+                        setProgressao((pr) =>
+                          trocarAcorde(pr, editando, g, qualidadeDoGrau(musica, g), qualidadeDoGrau(musica, g)),
+                        )
+                      }
+                      className="type-label flex min-h-11 min-w-11 items-center justify-center border px-3 transition-colors"
+                      style={{
+                        borderColor:
+                          progressao[editando].grau === g ? 'var(--timbre)' : '#332d27',
+                        color: progressao[editando].grau === g ? 'var(--timbre)' : '#a69c90',
+                      }}
+                    >
+                      {romano(musica, g)}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {QUALIDADES.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() =>
+                        setProgressao((pr) =>
+                          trocarAcorde(
+                            pr,
+                            editando,
+                            pr[editando].grau,
+                            q,
+                            qualidadeDoGrau(musica, pr[editando].grau),
+                          ),
+                        )
+                      }
+                      className="type-label flex min-h-11 items-center border px-4 transition-colors"
+                      style={{
+                        borderColor:
+                          qualidadeDoTrecho(musica, progressao[editando]) === q
+                            ? 'var(--timbre)'
+                            : '#332d27',
+                        color:
+                          qualidadeDoTrecho(musica, progressao[editando]) === q
+                            ? 'var(--timbre)'
+                            : '#a69c90',
+                      }}
+                    >
+                      {NOME_DA_QUALIDADE[q]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              {temTruque(musica) && (
+                <button
+                  onClick={() => {
+                    setProgressao(editado ? musica.progressao : semOTruque(musica))
+                    setEditando(null)
+                  }}
+                  className="type-label flex min-h-11 items-center border border-[#e0a34a] px-5 text-[#e0a34a] transition-colors hover:bg-[#e0a34a]/10"
+                >
+                  {editado ? 'devolver o truque' : 'ouvir sem o truque'}
+                </button>
+              )}
+              {editado && (
+                <button
+                  onClick={() => {
+                    setProgressao(musica.progressao)
+                    setEditando(null)
+                  }}
+                  className="type-label flex min-h-11 items-center border border-[#332d27] px-5 text-[#a69c90] transition-colors hover:text-[#f2ede6]"
+                >
+                  voltar ao original
+                </button>
               )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* o braço acendendo com o acorde que está soando */}
+        {/* ouvir a gravação de verdade: sem isso não dá pra comparar nada */}
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="type-label mt-6 inline-flex min-h-11 items-center border-b border-[#332d27] text-[#a69c90] transition-colors hover:border-[#e0a34a] hover:text-[#e0a34a]"
+        >
+          ouvir o original de {musica.artista} no youtube ↗
+        </a>
+
+        {/* o braço acendendo com o acorde */}
         <div className="mt-8">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
             <span className="type-label text-[#8a8075]">onde isso cai no braço</span>
             {grauAtual && (
-              <span className="type-label text-[#e0a34a]">
-                grau {romano(musica, grauAtual)} soando agora
+              <span className="type-label" style={{ color: 'var(--timbre)' }}>
+                {noteSolfejo(spellPc(pcAtual!))}
+                {qualidadeAtual === 'menor' ? 'm' : qualidadeAtual === 'diminuto' ? '°' : ''} ·
+                grau {romano(musica, grauAtual)}
               </span>
             )}
           </div>
@@ -256,7 +514,7 @@ export function DesmontadorPage() {
           </div>
         </div>
 
-        {/* A HISTÓRIA — como a música nasceu de verdade */}
+        {/* A HISTÓRIA */}
         <section className="mt-14">
           <span className="type-label text-[#8a8075]">como nasceu</span>
           <h2 className="type-display mt-3 text-3xl md:text-4xl">A história</h2>
@@ -265,55 +523,82 @@ export function DesmontadorPage() {
           </p>
         </section>
 
-        {/* A TEORIA — o truque que faz funcionar */}
+        {/* O TRUQUE */}
         <section className="mt-12 border-l-2 border-[#e0a34a] pl-6">
           <span className="type-label text-[#e0a34a]">o truque</span>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[#d5cec4]">{musica.teoria}</p>
+          {temTruque(musica) && (
+            <p className="type-label mt-4 text-[#8a8075]">
+              o botão &ldquo;ouvir sem o truque&rdquo; lá em cima devolve a versão óbvia — é a
+              diferença que importa
+            </p>
+          )}
         </section>
 
-        {/* AS CAMADAS — como os instrumentos se combinam */}
+        {/* AS CAMADAS — agora cada uma liga e desliga */}
         <section className="mt-14">
           <span className="type-label text-[#8a8075]">o que cada instrumento faz</span>
           <h2 className="type-display mt-3 text-3xl md:text-4xl">As camadas</h2>
           <div className="mt-6">
-            {musica.camadas.map((c) => (
-              <div
-                key={c.instrumento}
-                className="grid gap-x-8 gap-y-1 border-t border-[#332d27] py-5 last:border-b md:grid-cols-[10rem_1fr]"
-              >
-                <span className="type-label text-[#e0a34a]">{c.instrumento}</span>
-                <p className="text-[#a69c90]">{c.faz}</p>
-              </div>
-            ))}
+            {musica.camadas.map((c) => {
+              const p = c.pista
+              const on = p ? pistas[p] : null
+              return (
+                <div
+                  key={c.instrumento}
+                  className="grid gap-x-8 gap-y-2 border-t border-[#332d27] py-5 last:border-b md:grid-cols-[12rem_1fr]"
+                >
+                  <div>
+                    <span className="type-label block text-[#e0a34a]">{c.instrumento}</span>
+                    {p && (
+                      <button
+                        onClick={() => alternarPista(p)}
+                        aria-pressed={!!on}
+                        className="type-label mt-2 flex min-h-11 items-center gap-2 text-left transition-colors"
+                        style={{ color: on ? 'var(--timbre)' : '#8a8075' }}
+                      >
+                        <span
+                          className={`block h-1.5 w-1.5 rounded-full ${on ? 'led' : ''}`}
+                          style={{ background: on ? 'var(--timbre)' : '#332d27' }}
+                          aria-hidden
+                        />
+                        {on ? 'tocando' : 'desligado'}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[#a69c90]">{c.faz}</p>
+                </div>
+              )
+            })}
           </div>
         </section>
 
-        {/* A LIÇÃO — o que você leva pro seu instrumento */}
-        <section className="mt-12 border border-[#332d27] bg-[#1b1815] p-6 md:p-8">
+        {/* A LIÇÃO */}
+        <section className="relevo mt-12 border border-[#332d27] bg-[#1b1815] p-6 md:p-8">
           <span className="type-label text-[#e0a34a]">leve isso pro seu instrumento</span>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[#f2ede6]">{musica.licao}</p>
         </section>
 
-        {/* o campo harmônico inteiro, com os graus usados destacados */}
+        {/* o campo harmônico inteiro */}
         <div className="mt-10 border-t border-[#332d27] pt-8">
           <span className="type-label text-[#8a8075]">
             os sete acordes da tonalidade — em destaque, os que essa sequência usa
           </span>
           <div className="mt-4 flex flex-wrap gap-2">
             {GRAUS.map((g) => {
-              const usado = musica.progressao.some((t) => t.grau === g)
+              const usado = progressao.some((t) => t.grau === g)
               const soando = grauAtual === g
               const pc = pcDoGrau(musica, g)
               return (
                 <div
                   key={g}
-                  className={`min-w-20 flex-1 border px-3 py-4 text-center transition-colors ${
-                    soando
-                      ? 'border-[#e0a34a] bg-[#e0a34a] text-[#12100e]'
-                      : usado
-                        ? 'border-[#e0a34a]/50 bg-[#e0a34a]/10'
-                        : 'border-[#332d27] opacity-45'
-                  }`}
+                  className="min-w-20 flex-1 border px-3 py-4 text-center transition-colors"
+                  style={{
+                    borderColor: soando || usado ? 'var(--timbre)' : '#332d27',
+                    background: soando ? 'var(--timbre)' : 'transparent',
+                    color: soando ? '#12100e' : undefined,
+                    opacity: usado || soando ? 1 : 0.45,
+                  }}
                 >
                   <span className="type-display block text-xl">{romano(musica, g)}</span>
                   <span className="type-label mt-1 block">
@@ -325,7 +610,7 @@ export function DesmontadorPage() {
             })}
           </div>
           <p className="type-label mt-5 text-[#8a8075]">
-            só harmonia · sem letra, sem melodia, tocado com os samples do site
+            harmonia, levada e bateria tocadas com os samples do site · sem letra e sem melodia
           </p>
         </div>
       </main>

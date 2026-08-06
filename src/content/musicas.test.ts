@@ -1,13 +1,18 @@
 ﻿import { describe, expect, it } from 'vitest'
 import {
   duracaoEmTempos,
+  linkDoOriginal,
   MUSICAS,
+  PASSOS,
   pcDoGrau,
   qualidadeDoGrau,
   romano,
   romanoDoTrecho,
   qualidadeDoTrecho,
+  semOTruque,
+  temTruque,
   trechoNoTempo,
+  trocarAcorde,
 } from './musicas'
 
 describe('progressões', () => {
@@ -133,5 +138,114 @@ describe('linha do tempo', () => {
         expect(i).toBeLessThan(musica.progressao.length)
       }
     }
+  })
+})
+
+describe('o arranjo tocável', () => {
+  it('toda música tem levada e bateria válidas', () => {
+    // sem levada a música vira quatro blocos de som — que era exatamente o
+    // defeito da versão anterior da ferramenta
+    for (const m of MUSICAS) {
+      expect(m.levada.length).toBeGreaterThan(0)
+      for (const passo of m.levada) {
+        expect(passo).toBeGreaterThanOrEqual(0)
+        expect(passo).toBeLessThan(PASSOS)
+      }
+      expect(new Set(m.levada).size).toBe(m.levada.length)
+      for (const peca of ['chimbal', 'caixa', 'tom', 'bumbo'] as const) {
+        expect(m.bateria[peca]).toHaveLength(PASSOS)
+      }
+    }
+  })
+
+  it('a duração de toda música fecha em compassos inteiros', () => {
+    // a levada se repete a cada compasso de 4/4; se a soma dos tempos não for
+    // múltipla de 4, a batida escorrega em relação aos acordes a cada volta
+    for (const m of MUSICAS) {
+      expect(duracaoEmTempos(m) % 4).toBe(0)
+    }
+  })
+
+  it('cada música tem pelo menos harmonia, baixo e bateria tocáveis', () => {
+    for (const m of MUSICAS) {
+      const pistas = m.camadas.map((c) => c.pista).filter(Boolean)
+      expect(pistas).toContain('harmonia')
+      expect(pistas).toContain('baixo')
+      expect(pistas).toContain('bateria')
+    }
+  })
+
+  it('o link do original leva pra uma busca com o nome certo', () => {
+    const creep = MUSICAS.find((x) => x.id === 'creep')!
+    const link = linkDoOriginal(creep)
+    expect(link).toContain('youtube.com')
+    expect(decodeURIComponent(link)).toContain('Radiohead')
+    expect(decodeURIComponent(link)).toContain('Creep')
+    // a forma tradicional não tem artista pesquisável, então usa a busca própria
+    const blues = MUSICAS.find((x) => x.id === 'blues-12')!
+    expect(decodeURIComponent(linkDoOriginal(blues))).not.toContain('forma tradicional')
+  })
+})
+
+describe('desligar o truque', () => {
+  const creep = MUSICAS.find((x) => x.id === 'creep')!
+
+  it('o Creep tem truque; o Eduardo e Mônica não', () => {
+    expect(temTruque(creep)).toBe(true)
+    expect(temTruque(MUSICAS.find((x) => x.id === 'eduardo-e-monica')!)).toBe(false)
+  })
+
+  it('sem o truque, o III do Creep volta a ser menor e o iv volta a maior', () => {
+    // é ISTO que nenhum vídeo faz: um vídeo CONTA que o III maior causa o
+    // arrepio; aqui a pessoa desliga e ouve o arrepio ir embora
+    const sem = semOTruque(creep)
+    const terceiro = sem.find((t) => t.grau === 3)!
+    expect(terceiro.emprestado).toBeUndefined()
+    expect(qualidadeDoTrecho(creep, terceiro)).toBe('menor')
+    for (const t of sem) expect(t.emprestado).toBeUndefined()
+  })
+
+  it('desligar o truque não mexe na duração de nenhum trecho', () => {
+    // se mexesse, a sequência sairia do compasso e a comparação perderia sentido
+    const sem = semOTruque(creep)
+    expect(sem.map((t) => t.tempos)).toEqual(creep.progressao.map((t) => t.tempos))
+  })
+
+  it('não estraga o original', () => {
+    semOTruque(creep)
+    expect(creep.progressao.find((t) => t.grau === 3)!.emprestado).toBeDefined()
+  })
+})
+
+describe('trocar um acorde', () => {
+  const m = MUSICAS.find((x) => x.id === 'eduardo-e-monica')!
+
+  it('troca só o acorde escolhido e mantém a duração', () => {
+    const nova = trocarAcorde(m.progressao, 1, 4, 'maior', qualidadeDoGrau(m, 4))
+    expect(nova[1].grau).toBe(4)
+    expect(nova[1].tempos).toBe(m.progressao[1].tempos)
+    expect(nova[0].grau).toBe(m.progressao[0].grau)
+    expect(nova[3].grau).toBe(m.progressao[3].grau)
+  })
+
+  it('qualidade igual à do campo harmônico não vira empréstimo', () => {
+    const nova = trocarAcorde(m.progressao, 0, 6, 'menor', qualidadeDoGrau(m, 6))
+    expect(nova[0].emprestado).toBeUndefined()
+    expect(qualidadeDoTrecho(m, nova[0])).toBe('menor')
+  })
+
+  it('qualidade fora do campo vira empréstimo e a ferramenta toca ela', () => {
+    // trocar o vi menor por VI maior é a experiência que ensina o que
+    // "emprestado" quer dizer — e o som TEM que mudar de verdade
+    const nova = trocarAcorde(m.progressao, 2, 6, 'maior', qualidadeDoGrau(m, 6))
+    expect(nova[2].emprestado).toBeDefined()
+    expect(qualidadeDoTrecho(m, nova[2])).toBe('maior')
+    expect(romanoDoTrecho(m, nova[2])).toBe('VI')
+  })
+
+  it('não estraga a progressão original', () => {
+    const antes = JSON.stringify(m.progressao)
+    trocarAcorde(m.progressao, 0, 7, 'diminuto', qualidadeDoGrau(m, 7))
+    expect(JSON.stringify(m.progressao)).toBe(antes)
   })
 })
