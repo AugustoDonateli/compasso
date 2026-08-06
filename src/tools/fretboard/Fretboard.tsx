@@ -33,7 +33,7 @@ const ROLE_FILL: Record<NoteRole, { fill: string; opacity: number; text: string 
   tonica: { fill: '#e0a34a', opacity: 1, text: '#12100e' },
   acorde: { fill: '#e0a34a', opacity: 0.6, text: '#12100e' },
   escala: { fill: '#e0a34a', opacity: 0.25, text: '#f2ede6' },
-  fora: { fill: 'transparent', opacity: 0, text: '#6e655c' },
+  fora: { fill: 'transparent', opacity: 0, text: '#8a8075' },
 }
 
 /** notas naturais (sem sustenido/bemol) — o que se aprende primeiro */
@@ -141,7 +141,7 @@ export function Fretboard({
             textAnchor="middle"
             fontSize={10}
             fontFamily="Space Mono, monospace"
-            fill="#6e655c"
+            fill="#8a8075"
           >
             {f}
           </text>

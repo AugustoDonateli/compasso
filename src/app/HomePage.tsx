@@ -165,7 +165,7 @@ function FieldMeasure() {
               o que o Compasso quer dizer com <span className="text-[#e0a34a]">tocar a teoria</span>.
             </p>
           </div>
-          <span className="type-label text-[#6e655c]">o nome disso é campo harmônico</span>
+          <span className="type-label text-[#8a8075]">o nome disso é campo harmônico</span>
         </div>
 
         {/* o compasso: barra pesada abre, sete tempos, barra pesada fecha */}
@@ -194,7 +194,7 @@ function FieldMeasure() {
               >
                 {d.roman}
               </span>
-              <span className="mt-3 block font-mono text-xs text-[#6e655c] group-hover:text-[#a69c90] md:text-sm">
+              <span className="mt-3 block font-mono text-xs text-[#8a8075] group-hover:text-[#a69c90] md:text-sm">
                 {d.symbol}
               </span>
             </button>
@@ -203,7 +203,7 @@ function FieldMeasure() {
           <span className="w-[3px] shrink-0 bg-[#a69c90]" />
         </div>
 
-        <p className="type-label mt-10 text-[#6e655c]">
+        <p className="type-label mt-10 text-[#8a8075]">
           {playing
             ? `você tocou o grau ${field[playing - 1].roman} (${field[playing - 1].symbol}) — junta ele com o V e o vi e você já toca metade do pop`
             : 'sem cadastro, sem aula em vídeo, sem pdf. o instrumento é a página.'}
@@ -300,7 +300,7 @@ function Footer({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
     <footer className="flex min-h-[70vh] flex-col justify-between overflow-hidden bg-[#12100e] px-5 pt-24 md:px-10">
       <div className="flex items-baseline justify-between">
-        <span className="type-label text-[#6e655c]">‖: volta amanhã — sempre tem um próximo passo :‖</span>
+        <span className="type-label text-[#8a8075]">‖: volta amanhã — sempre tem um próximo passo :‖</span>
         <button
           onClick={onToggle}
           className="type-label text-[#a69c90] transition-colors hover:text-[#e0a34a]"
@@ -321,10 +321,10 @@ function Footer({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
           Compasso
         </div>
         <div className="mt-8 flex flex-wrap items-baseline justify-between gap-4 border-t-2 border-[#332d27] pt-5">
-          <span className="type-label text-[#6e655c]">
+          <span className="type-label text-[#8a8075]">
             teoria musical · feito à mão · sem pressa
           </span>
-          <span className="font-mono text-xs text-[#6e655c]">♩ = você que dita</span>
+          <span className="font-mono text-xs text-[#8a8075]">♩ = você que dita</span>
         </div>
       </div>
     </footer>

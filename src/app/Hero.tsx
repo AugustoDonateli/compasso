@@ -156,7 +156,7 @@ export function Hero() {
       {/* andamento — estático; o pulso vive no som, não na tela */}
       <div className="absolute right-5 top-6 hidden items-center gap-2 md:flex md:right-10">
         <span className="block h-3 w-0.5 bg-[#e0a34a]" />
-        <span className="type-label text-[#6e655c]">♩ = 40</span>
+        <span className="type-label text-[#8a8075]">♩ = 40</span>
       </div>
 
       {/* ATO DE ABERTURA: nome + a promessa, clara e direta */}

@@ -106,7 +106,7 @@ export function Keyboard({
                 state(pc) === 'correct' || state(pc) === 'wrong'
                   ? '#f2ede6'
                   : state(pc) === 'inert'
-                    ? '#6e655c'
+                    ? '#8a8075'
                     : '#3a322b'
               }
               pointerEvents="none"

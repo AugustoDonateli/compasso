@@ -76,7 +76,7 @@ export function GroovePage() {
     <div className="min-h-screen pt-[var(--altura-nav)] bg-[#171310] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
         <span />
-        <span className="type-label text-[#6e655c]">ferramenta 02</span>
+        <span className="type-label text-[#8a8075]">ferramenta 02</span>
       </header>
 
       <main className="px-5 pb-24 md:px-10">
@@ -102,7 +102,7 @@ export function GroovePage() {
           </button>
 
           <div className="flex items-center gap-3">
-            <span className="type-label text-[#6e655c]">♩ =</span>
+            <span className="type-label text-[#8a8075]">♩ =</span>
             <input
               type="range"
               min={60}
@@ -115,7 +115,7 @@ export function GroovePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="type-label mr-1 text-[#6e655c]">levadas</span>
+            <span className="type-label mr-1 text-[#8a8075]">levadas</span>
             {PRESETS.map((p) => (
               <button
                 key={p.name}
@@ -131,7 +131,7 @@ export function GroovePage() {
             ))}
             <button
               onClick={() => loadPreset(emptyPattern())}
-              className="type-label border border-[#332d27] px-3 py-2 text-[#6e655c] transition-colors hover:border-[#b2543c] hover:text-[#b2543c]"
+              className="type-label border border-[#332d27] px-3 py-2 text-[#8a8075] transition-colors hover:border-[#b2543c] hover:text-[#b2543c]"
             >
               limpar
             </button>
@@ -163,7 +163,7 @@ export function GroovePage() {
                                 : 'border-[#e0a34a] bg-[#e0a34a]'
                               : hot
                                 ? 'border-[#a69c90] bg-[#f2ede6]/10'
-                                : 'border-[#332d27] bg-transparent hover:border-[#6e655c]'
+                                : 'border-[#332d27] bg-transparent hover:border-[#8a8075]'
                           }`}
                         />
                       )
@@ -178,13 +178,13 @@ export function GroovePage() {
         {/* a notação viva */}
         <div className="mt-8">
           <div className="mb-3 flex items-baseline justify-between">
-            <span className="type-label text-[#6e655c]">a mesma levada, escrita</span>
-            <span className="type-label text-[#6e655c]">{pattern.name}</span>
+            <span className="type-label text-[#8a8075]">a mesma levada, escrita</span>
+            <span className="type-label text-[#8a8075]">{pattern.name}</span>
           </div>
           <div className="border border-[#332d27] bg-[#1b1815] p-4">
             <Notation pattern={pattern} playStep={playStep} />
           </div>
-          <p className="type-label mt-4 text-[#6e655c]">
+          <p className="type-label mt-4 text-[#8a8075]">
             x = chimbal · bola no meio = caixa · bola embaixo = bumbo · os números embaixo são a
             contagem: 1 e & a 2 e & a…
           </p>

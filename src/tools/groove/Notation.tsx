@@ -104,7 +104,7 @@ export function Notation({ pattern, playStep }: { pattern: Pattern; playStep: nu
           fontSize={11}
           fontFamily="Space Mono, monospace"
           fontWeight={i % 4 === 0 ? 700 : 400}
-          fill={playStep === i ? '#e0a34a' : i % 4 === 0 ? '#a69c90' : '#6e655c'}
+          fill={playStep === i ? '#e0a34a' : i % 4 === 0 ? '#a69c90' : '#8a8075'}
         >
           {countLabel(i)}
         </text>
@@ -112,7 +112,7 @@ export function Notation({ pattern, playStep }: { pattern: Pattern; playStep: nu
 
       {/* rótulos das peças à esquerda */}
       {Object.entries(PIECE_Y).map(([piece, y]) => (
-        <text key={piece} x={2} y={y + 3} fontSize={8.5} fontFamily="Space Mono, monospace" fill="#6e655c">
+        <text key={piece} x={2} y={y + 3} fontSize={8.5} fontFamily="Space Mono, monospace" fill="#8a8075">
           {piece}
         </text>
       ))}

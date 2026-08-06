@@ -71,14 +71,18 @@ function Segmented<T extends string>({
   label: string
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="type-label text-[#6e655c]">{label}</span>
-      <div className="flex border border-[#332d27]">
+    /* No celular o rótulo sobe pra cima do trilho e o trilho rola dentro da
+       PRÓPRIA borda. Antes, com seis instrumentos em "som", o controle tinha
+       361px dentro de uma tela de 375 e empurrava a página inteira pra 522px
+       de largura — a página rolando de lado, que é o que nunca pode. */
+    <div className="flex w-full min-w-0 flex-col gap-2 md:w-auto md:flex-row md:items-center md:gap-3">
+      <span className="type-label text-[#8a8075]">{label}</span>
+      <div className="flex max-w-full overflow-x-auto border border-[#332d27]">
         {options.map((o, i) => (
           <button
             key={o.id}
             onClick={() => onChange(o.id)}
-            className={`type-label px-4 py-2.5 transition-colors ${i > 0 ? 'border-l border-[#332d27]' : ''} ${
+            className={`type-label flex min-h-11 shrink-0 items-center px-4 transition-colors ${i > 0 ? 'border-l border-[#332d27]' : ''} ${
               value === o.id
                 ? 'bg-[#e0a34a] text-[#12100e]'
                 : 'text-[#a69c90] hover:bg-[#f2ede6]/5 hover:text-[#f2ede6]'
@@ -212,7 +216,7 @@ export function OuvidoPage() {
     <div className="min-h-screen pt-[var(--altura-nav)] bg-[#12100e] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
         <span />
-        <span className="type-label text-[#6e655c]">ferramenta 04</span>
+        <span className="type-label text-[#8a8075]">ferramenta 04</span>
       </header>
 
       <main className="px-5 pb-24 md:px-10">
@@ -232,14 +236,14 @@ export function OuvidoPage() {
 
           <div className="flex items-end gap-10">
             <div>
-              <span className="type-label block text-[#6e655c]">acertos</span>
+              <span className="type-label block text-[#8a8075]">acertos</span>
               <span className="type-display text-5xl md:text-6xl">
                 {score.acertos}
-                <span className="text-2xl text-[#6e655c]">/{score.tentativas}</span>
+                <span className="text-2xl text-[#8a8075]">/{score.tentativas}</span>
               </span>
             </div>
             <div>
-              <span className="type-label block text-[#6e655c]">sequência</span>
+              <span className="type-label block text-[#8a8075]">sequência</span>
               <span
                 className={`type-display text-5xl md:text-6xl ${streak >= 3 ? 'text-[#e0a34a]' : ''}`}
               >
@@ -248,7 +252,7 @@ export function OuvidoPage() {
             </div>
             {pct !== null && (
               <div className="hidden md:block">
-                <span className="type-label block text-[#6e655c]">precisão</span>
+                <span className="type-label block text-[#8a8075]">precisão</span>
                 <span className="type-display text-5xl md:text-6xl">{pct}%</span>
               </div>
             )}
@@ -284,7 +288,7 @@ export function OuvidoPage() {
               label: SOUND_LABEL[s],
             }))}
           />
-          <p className="max-w-md text-sm text-[#6e655c]">{KIND_HELP[kind]}</p>
+          <p className="max-w-md text-sm text-[#8a8075]">{KIND_HELP[kind]}</p>
         </div>
 
         {/* O PALCO */}
@@ -401,7 +405,7 @@ export function OuvidoPage() {
         </div>
 
         <div className="mt-5 flex flex-wrap items-baseline justify-between gap-4">
-          <span className="type-label text-[#6e655c]">
+          <span className="type-label text-[#8a8075]">
             {score.tentativas === 0
               ? 'a onda acima mostra o som de verdade — clica em ouvir de novo quantas vezes quiser'
               : `melhor sequência: ${best}`}

@@ -142,7 +142,7 @@ export function BracoPage() {
     <div className="min-h-screen pt-[var(--altura-nav)] bg-[#171310] text-[#f2ede6]">
       <header className="flex items-center justify-between px-5 pb-6 pt-6 md:px-10">
         <span />
-        <span className="type-label text-[#6e655c]">ferramenta 01</span>
+        <span className="type-label text-[#8a8075]">ferramenta 01</span>
       </header>
 
       <main className="px-5 pb-24 md:px-10">
@@ -156,7 +156,7 @@ export function BracoPage() {
         {/* instrumento + modo */}
         <div className="flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-[#332d27] pt-5">
           <div className="flex items-center gap-2">
-            <span className="type-label mr-1 text-[#6e655c]">instrumento</span>
+            <span className="type-label mr-1 text-[#8a8075]">instrumento</span>
             <Chip active={instrument === 'guitarra'} onClick={() => setInstrument('guitarra')}>
               guitarra
             </Chip>
@@ -165,7 +165,7 @@ export function BracoPage() {
             </Chip>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="type-label mr-1 text-[#6e655c]">o que fazer</span>
+            <span className="type-label mr-1 text-[#8a8075]">o que fazer</span>
             {(Object.keys(MODE_LABEL) as Mode[]).map((m) => (
               <Chip key={m} active={mode === m} onClick={() => setMode(m)}>
                 {MODE_LABEL[m]}
@@ -190,7 +190,7 @@ export function BracoPage() {
         {contextual && (
           <div className="mt-6 flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="type-label mr-2 w-full text-[#6e655c] md:w-auto">nota-base</span>
+              <span className="type-label mr-2 w-full text-[#8a8075] md:w-auto">nota-base</span>
               {TONICS.map((pc) => (
                 <Chip key={pc} active={tonic === pc} onClick={() => setTonic(pc)}>
                   {noteSolfejo(spellPc(pc))}
@@ -198,7 +198,7 @@ export function BracoPage() {
               ))}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="type-label mr-2 w-full text-[#6e655c] md:w-auto">
+              <span className="type-label mr-2 w-full text-[#8a8075] md:w-auto">
                 {mode === 'escala' ? 'escala' : 'tipo de acorde'}
               </span>
               {mode === 'escala'
@@ -260,11 +260,11 @@ export function BracoPage() {
           <div>
             {readout ? (
               <>
-                <span className="type-label block text-[#6e655c]">você tocou</span>
+                <span className="type-label block text-[#8a8075]">você tocou</span>
                 <span className="type-display text-4xl text-[#e0a34a] md:text-5xl">{readout}</span>
               </>
             ) : (
-              <span className="type-label text-[#6e655c]">
+              <span className="type-label text-[#8a8075]">
                 toca uma casa pra começar · no celular, arrasta o braço pro lado
               </span>
             )}
