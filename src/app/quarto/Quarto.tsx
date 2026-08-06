@@ -26,8 +26,13 @@ import { getProgress } from '../../progress'
    E `clip-path` também recorta o clique, então a área sensível é a silhueta do
    objeto, não um retângulo em volta dele. */
 
+export interface Foto {
+  padrao: string
+  conjunto: string
+}
+
 interface Props {
-  foto: string
+  foto: Foto
   retrato: boolean
 }
 
@@ -58,7 +63,9 @@ export function Quarto({ foto, retrato }: Props) {
     <div className="relative min-h-screen overflow-hidden bg-[#0b0908]">
       {/* a foto, sangrando na tela inteira */}
       <img
-        src={foto}
+        src={foto.padrao}
+        srcSet={foto.conjunto}
+        sizes="100vw"
         alt="Um quarto de quem toca música: bateria, guitarra na parede, toca-discos, fone na cama, caderno de música na mesa e um pedal no chão. Cada objeto abre uma ferramenta."
         className="h-screen w-full object-cover"
       />
@@ -81,7 +88,9 @@ export function Quarto({ foto, retrato }: Props) {
               style={{ clipPath: clipPath(o.forma), opacity: on ? 1 : livre ? 0.22 : 0 }}
             >
               <img
-                src={foto}
+                src={foto.padrao}
+                srcSet={foto.conjunto}
+                sizes="100vw"
                 alt=""
                 aria-hidden
                 className="h-screen w-full object-cover"
