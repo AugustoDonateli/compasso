@@ -26,3 +26,7 @@ dist-ssr
 # variaveis de ambiente
 .env
 .env.local
+
+# imagens brutas do quarto (PNG 4K) — pesadas demais pro repo;
+# só as escolhidas, já convertidas pra WebP, sobem
+public/assets/img/brutas/

@@ -8,6 +8,7 @@ import { TrilhaPage } from './app/pages/TrilhaPage'
 import { AfinadorPage } from './app/pages/AfinadorPage'
 import { DesmontadorPage } from './app/pages/DesmontadorPage'
 import { RankingPage } from './app/pages/RankingPage'
+import { QuartoPage } from './app/pages/QuartoPage'
 import { Nav } from './app/Nav'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
@@ -57,6 +58,8 @@ function App() {
         <Route path="/afinador" element={<AfinadorPage />} />
         <Route path="/desmontador" element={<DesmontadorPage />} />
         <Route path="/ranking" element={<RankingPage />} />
+        {/* o quarto: o menu como lugar. ?calibrar abre o modo de contorno */}
+        <Route path="/quarto" element={<QuartoPage />} />
       </Routes>
     </BrowserRouter>
   )
