@@ -15,9 +15,14 @@ import { Quarto } from '../quarto/Quarto'
    O 4K bruto tem 5,7 MB de PNG — mandar isso pro celular de alguém seria
    entregar uma tela preta por dez segundos. Em WebP, a mesma imagem em
    resolução cheia dá 339 KB, e quem está num aparelho menor recebe 94 KB. */
+/* Sem candidato de 900px aqui de propósito. A foto cobre a tela inteira,
+   então numa janela de 1280px o navegador escolhia o arquivo de 900 e
+   esticava — imagem amassada pra economizar 40 KB que ninguém pediu.
+   Numa imagem de fundo em tela cheia, o menor candidato tem que ser grande
+   o bastante pra tela mais comum, senão a economia vira defeito visível. */
 const DESKTOP = {
   padrao: '/assets/img/quarto-desktop-1376.webp',
-  conjunto: '/assets/img/quarto-desktop-900.webp 900w, /assets/img/quarto-desktop-1376.webp 1376w',
+  conjunto: '/assets/img/quarto-desktop-1376.webp 1376w',
 }
 const MOBILE = {
   padrao: '/assets/img/quarto-mobile-1400.webp',
