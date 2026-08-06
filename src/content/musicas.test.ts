@@ -1,10 +1,12 @@
 ﻿import { describe, expect, it } from 'vitest'
 import {
   duracaoEmTempos,
+  levadaParaUrl,
   linkDoOriginal,
   MUSICAS,
   PASSOS,
   pcDoGrau,
+  pcDoTrecho,
   qualidadeDoGrau,
   romano,
   romanoDoTrecho,
@@ -14,6 +16,7 @@ import {
   trechoNoTempo,
   trocarAcorde,
 } from './musicas'
+import { patternDaUrl } from '../tools/groove/patterns'
 
 describe('progressões', () => {
   it('ids únicos e campos preenchidos', () => {
@@ -53,13 +56,15 @@ describe('progressões', () => {
     }
   })
 
-  it('em ré maior, o grau I é ré e o V é lá', () => {
+  it('em mi maior, o grau I é mi, o IV é lá e o V é si', () => {
+    // este teste dizia "em ré maior" e usava Eduardo e Mônica como exemplo —
+    // porque o dado estava na tonalidade errada. O tom original é mi.
     const m = MUSICAS.find((x) => x.id === 'eduardo-e-monica')!
-    expect(m.tonica).toBe(2)
-    expect(pcDoGrau(m, 1)).toBe(2) // ré
-    expect(pcDoGrau(m, 5)).toBe(9) // lá
-    expect(pcDoGrau(m, 6)).toBe(11) // si
-    expect(pcDoGrau(m, 4)).toBe(7) // sol
+    expect(m.tonica).toBe(4)
+    expect(pcDoGrau(m, 1)).toBe(4) // mi
+    expect(pcDoGrau(m, 4)).toBe(9) // lá
+    expect(pcDoGrau(m, 5)).toBe(11) // si
+    expect(pcDoGrau(m, 6)).toBe(1) // dó#
   })
 
   it('a qualidade segue o campo harmônico: I maior, vi menor', () => {
@@ -187,12 +192,135 @@ describe('o arranjo tocável', () => {
   })
 })
 
+describe('acordes conferidos contra a fonte', () => {
+  /* Estes testes existem porque eu escrevi levada e bateria de cabeça e o
+     Augusto, que é baterista, ouviu na hora. A auditoria que veio junto achou
+     dois erros de harmonia — que são piores, porque o site ensinava errado.
+     Cada expectativa aqui é uma cifra conferida, não memória. */
+
+  const nomeDoAcorde = (id: string, i: number) => {
+    const m = MUSICAS.find((x) => x.id === id)!
+    const t = m.progressao[i]
+    const pc = pcDoTrecho(m, t)
+    const q = qualidadeDoTrecho(m, t)
+    return `${pc}${q === 'menor' ? 'm' : q === 'diminuto' ? '°' : ''}`
+  }
+
+  it('Creep em sol: Sol, Si, Dó, Dóm', () => {
+    // 7=sol 11=si 0=dó
+    expect(['0', '1', '2', '3'].map((_, i) => nomeDoAcorde('creep', i))).toEqual([
+      '7',
+      '11',
+      '0',
+      '0m',
+    ])
+  })
+
+  it('Eduardo e Mônica está em MI, não em ré, e o terceiro acorde é ♭VII', () => {
+    // erro achado em 2026-08-06: estava em ré maior tocando I-V-vi-IV, que é
+    // outra música. O tom original é mi, e a sequência é Mi, Lá, Ré, Mi —
+    // com o ré vindo de fora da escala (em mi maior o VII é ré SUSTENIDO).
+    const m = MUSICAS.find((x) => x.id === 'eduardo-e-monica')!
+    expect(m.tonica).toBe(4) // mi
+    expect([0, 1, 2, 3].map((i) => nomeDoAcorde('eduardo-e-monica', i))).toEqual([
+      '4', // mi
+      '9', // lá
+      '2', // ré natural — ♭VII
+      '4', // mi
+    ])
+    expect(romanoDoTrecho(m, m.progressao[2])).toBe('♭VII')
+    // sem a alteração o site tocaria ré sustenido e chamaria de certo
+    expect(pcDoGrau(m, 7)).toBe(3)
+  })
+
+  it('In the End: Mi menor, Sol, Ré, Dó', () => {
+    // erro achado em 2026-08-06: o quarto acorde estava como Lá menor
+    expect([0, 1, 2, 3].map((i) => nomeDoAcorde('in-the-end', i))).toEqual([
+      '4m', // mi menor
+      '7', // sol
+      '2', // ré
+      '0', // dó
+    ])
+  })
+
+  it('Boys Don´t Cry em lá: Lá, Sim, Dó#m, Ré', () => {
+    expect([0, 1, 2, 3].map((i) => nomeDoAcorde('boys-dont-cry', i))).toEqual([
+      '9',
+      '11m',
+      '1m',
+      '2',
+    ])
+  })
+
+  it('Teen Spirit em fá menor: Fá, Sibm, Láb, Réb', () => {
+    expect([0, 1, 2, 3].map((i) => nomeDoAcorde('teen-spirit', i))).toEqual([
+      '5m',
+      '10m',
+      '8',
+      '1',
+    ])
+  })
+
+  it('grau alterado sempre declara a própria qualidade', () => {
+    // o campo harmônico não sabe responder por um acorde que não está nele:
+    // sem `emprestado`, um ♭VII herdaria a qualidade do VII e sairia diminuto
+    for (const m of MUSICAS) {
+      for (const t of m.progressao) {
+        if (t.alteracao) expect(t.emprestado).toBeDefined()
+      }
+    }
+  })
+})
+
+describe('a levada abre na groove machine', () => {
+  it('vai e volta sem perder um passo', () => {
+    for (const m of MUSICAS) {
+      const url = levadaParaUrl(m)
+      const q = new URLSearchParams(url.split('?')[1])
+      const volta = patternDaUrl(q.get('levada'), q.get('bpm'), q.get('de'))!
+      expect(volta).not.toBeNull()
+      expect(volta.bpm).toBe(m.bpm)
+      for (const peca of ['chimbal', 'caixa', 'tom', 'bumbo'] as const) {
+        expect(volta.steps[peca]).toEqual(m.bateria[peca])
+      }
+    }
+  })
+
+  it('link torto não quebra a página', () => {
+    expect(patternDaUrl(null, null, null)).toBeNull()
+    expect(patternDaUrl('1010', '90', 'x')).toBeNull()
+    expect(patternDaUrl('abc-def-ghi-jkl', '90', 'x')).toBeNull()
+    expect(patternDaUrl('0'.repeat(16) + '-' + '0'.repeat(16), '90', 'x')).toBeNull()
+  })
+
+  it('bpm absurdo cai num valor tocável', () => {
+    const bom = '0'.repeat(16)
+    const p = patternDaUrl([bom, bom, bom, bom].join('-'), '99999', 'x')!
+    expect(p.bpm).toBeGreaterThanOrEqual(40)
+    expect(p.bpm).toBeLessThanOrEqual(240)
+  })
+})
+
 describe('desligar o truque', () => {
   const creep = MUSICAS.find((x) => x.id === 'creep')!
 
-  it('o Creep tem truque; o Eduardo e Mônica não', () => {
+  it('Creep e Eduardo e Mônica têm truque; Boys Don´t Cry não', () => {
     expect(temTruque(creep)).toBe(true)
-    expect(temTruque(MUSICAS.find((x) => x.id === 'eduardo-e-monica')!)).toBe(false)
+    // Eduardo e Mônica passou a ter truque quando o ♭VII foi corrigido — o
+    // exemplo sem truque agora é o Boys Don´t Cry, que só sobe a escala
+    expect(temTruque(MUSICAS.find((x) => x.id === 'eduardo-e-monica')!)).toBe(true)
+    expect(temTruque(MUSICAS.find((x) => x.id === 'boys-dont-cry')!)).toBe(false)
+  })
+
+  it('em Eduardo e Mônica, a versão óbvia troca o ♭VII pelo V', () => {
+    // tirar o empréstimo deixaria um VII diminuto que ninguém toca; a
+    // comparação que ensina é contra o si maior, que é o que a cartilha manda
+    const m = MUSICAS.find((x) => x.id === 'eduardo-e-monica')!
+    const sem = semOTruque(m)
+    expect(sem[2].grau).toBe(5)
+    expect(sem[2].alteracao).toBeUndefined()
+    expect(pcDoTrecho(m, sem[2])).toBe(11) // si
+    expect(sem.map((t) => t.tempos)).toEqual(m.progressao.map((t) => t.tempos))
   })
 
   it('sem o truque, o III do Creep volta a ser menor e o iv volta a maior', () => {

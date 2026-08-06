@@ -1,10 +1,12 @@
 ﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getDrumKit, preloadDrumKit, type DrumPiece } from '../../audio/instruments'
 import { setBpm, startSixteenthLoop } from '../../audio/transport'
 import { Notation } from '../../tools/groove/Notation'
 import {
   emptyPattern,
   LANES,
+  patternDaUrl,
   PRESETS,
   STEPS,
   toggleStep,
@@ -17,10 +19,16 @@ import {
    começa — e aqui é o terreno do baterista. */
 
 export function GroovePage() {
-  const [pattern, setPattern] = useState<Pattern>(() => ({ ...PRESETS[0] }))
+  /* O Desmontador manda a levada da música por aqui. A bateria de lá é a do
+     ESTILO, não transcrição da gravação — então a pessoa que toca bateria
+     chega aqui pra consertar e ouvir. Link torto abre a máquina normal. */
+  const [params] = useSearchParams()
+  const importada = patternDaUrl(params.get('levada'), params.get('bpm'), params.get('de'))
+
+  const [pattern, setPattern] = useState<Pattern>(() => importada ?? { ...PRESETS[0] })
   const [playing, setPlaying] = useState(false)
   const [playStep, setPlayStep] = useState<number | null>(null)
-  const [bpm, setBpmState] = useState(PRESETS[0].bpm)
+  const [bpm, setBpmState] = useState(importada?.bpm ?? PRESETS[0].bpm)
   const stopRef = useRef<(() => void) | null>(null)
   const patternRef = useRef(pattern)
   patternRef.current = pattern

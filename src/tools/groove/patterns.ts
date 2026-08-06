@@ -86,6 +86,28 @@ export const PRESETS: Pattern[] = [
   },
 ]
 
+/** Decodifica a levada que o Desmontador manda pela URL.
+ *  Devolve null em qualquer coisa malformada: link velho ou torto abre a
+ *  Groove Machine normal em vez de quebrar a página. */
+export function patternDaUrl(
+  levada: string | null,
+  bpm: string | null,
+  de: string | null,
+): Pattern | null {
+  if (!levada) return null
+  const trilhas = levada.split('-')
+  if (trilhas.length !== 4) return null
+  if (trilhas.some((t) => t.length !== STEPS || /[^01]/.test(t))) return null
+
+  const n = Number(bpm)
+  const [chimbal, caixa, tom, bumbo] = trilhas.map((t) => [...t].map((c) => c === '1'))
+  return {
+    name: de ? `levada de ${de}` : 'levada importada',
+    bpm: Number.isFinite(n) && n >= 40 && n <= 240 ? n : 96,
+    steps: { chimbal, caixa, tom, bumbo },
+  }
+}
+
 export function toggleStep(p: Pattern, laneId: DrumPiece, step: number): Pattern {
   const steps = { ...p.steps, [laneId]: p.steps[laneId].map((v, i) => (i === step ? !v : v)) }
   return { ...p, name: 'sua levada', steps }

@@ -22,6 +22,11 @@ export interface Trecho {
   /** grau na tonalidade: 1 = I, 6 = vi */
   grau: number
   tempos: number
+  /** meio-tom pra baixo (-1) ou pra cima (+1) no grau.
+   *  Existe porque acorde de verdade sai da escala: o D de Eduardo e Mônica,
+   *  em mi maior, é ♭VII — não é o VII do campo harmônico nem nada perto. Sem
+   *  isso o site tocava outro acorde e chamava de certo. */
+  alteracao?: -1 | 1
   /** quando o acorde não vem do campo harmônico, o que ele é de verdade */
   emprestado?: { qualidade: ChordQuality; porque: string }
 }
@@ -59,6 +64,10 @@ export interface Musica {
   modo: 'maior' | 'menor'
   bpm: number
   progressao: Trecho[]
+  /** a versão óbvia desta música, quando "tirar o empréstimo" não dá conta.
+   *  Em Eduardo e Mônica o truque é usar ♭VII onde a cartilha manda V —
+   *  a comparação que ensina é contra o V, não contra um VII diminuto. */
+  semTruque?: Trecho[]
   /** quem carrega a harmonia — o Linkin Park abre no piano, não na guitarra */
   som: InstrumentSoundId
   /** em quais semicolcheias do compasso a harmonia ataca. É o que faltava:
@@ -110,7 +119,7 @@ export const MUSICAS: Musica[] = [
     genero: 'rock alternativo',
     tonica: 7, // sol maior
     modo: 'maior',
-    bpm: 92,
+    bpm: 93, // conferido: 93, nao 92
     progressao: [
       { grau: 1, tempos: 4 },
       {
@@ -166,7 +175,7 @@ export const MUSICAS: Musica[] = [
       },
     ],
     licao:
-      'Trocar um acorde maior pelo menor de mesmo nome muda a emoção sem mudar a harmonia. Testa isso: toca a sequência com o quarto acorde maior e depois menor, e sente a diferença.',
+      'Trocar um acorde maior pelo menor de mesmo nome muda a emoção inteira sem mudar a fundamental. É o que acontece aqui entre o terceiro e o quarto compasso: mesmo dó, primeiro maior, depois menor. Leve isso pro seu instrumento — em qualquer sequência sua, pegue um acorde maior e toque a versão menor dele. Você acabou de ouvir esse truque acontecer nos dois sentidos ali em cima.',
   },
   {
     id: 'teen-spirit',
@@ -176,7 +185,7 @@ export const MUSICAS: Musica[] = [
     genero: 'grunge',
     tonica: 5, // fá menor
     modo: 'menor',
-    bpm: 117,
+    bpm: 116, // conferido: 116
     progressao: [
       { grau: 1, tempos: 4 },
       { grau: 4, tempos: 4 },
@@ -274,10 +283,12 @@ export const MUSICAS: Musica[] = [
     modo: 'menor',
     bpm: 105,
     progressao: [
+      // Mi menor, Sol, Ré, Dó — i, III, VII, VI. Estava com Lá menor no lugar
+      // do Dó, que é acorde de outra música.
       { grau: 1, tempos: 4 },
       { grau: 3, tempos: 4 },
       { grau: 7, tempos: 4 },
-      { grau: 4, tempos: 4 },
+      { grau: 6, tempos: 4 },
     ],
     som: 'piano',
     levada: [0, 4, 8, 12],
@@ -319,14 +330,33 @@ export const MUSICAS: Musica[] = [
     artista: 'Legião Urbana',
     ano: 1986,
     genero: 'rock nacional',
-    tonica: 2, // ré maior
+    tonica: 4, // mi maior — é o tom original, conferido em cifra
     modo: 'maior',
     bpm: 128,
+    /* Mi, Lá, Ré, Mi. O Ré é ♭VII: em mi maior o sétimo grau é ré SUSTENIDO,
+       então esse acorde vem de fora da escala. Estava escrito aqui como
+       I-V-vi-IV em ré maior, que é outra música. */
     progressao: [
       { grau: 1, tempos: 4 },
-      { grau: 5, tempos: 4 },
-      { grau: 6, tempos: 4 },
       { grau: 4, tempos: 4 },
+      {
+        grau: 7,
+        alteracao: -1,
+        tempos: 4,
+        emprestado: {
+          qualidade: 'maior',
+          porque:
+            'o sétimo grau de mi maior é ré sustenido e diminuto — este ré natural maior vem de fora, e é ele que dá o ar de estrada aberta em vez de resolução certinha',
+        },
+      },
+      { grau: 1, tempos: 4 },
+    ],
+    // a versão da cartilha: onde a música põe ♭VII, a teoria de escola põe V
+    semTruque: [
+      { grau: 1, tempos: 4 },
+      { grau: 4, tempos: 4 },
+      { grau: 5, tempos: 4 },
+      { grau: 1, tempos: 4 },
     ],
     som: 'violao',
     levada: [0, 4, 6, 10, 12, 14],
@@ -339,7 +369,7 @@ export const MUSICAS: Musica[] = [
     historia:
       'A Mônica da letra foi inspirada numa amiga de verdade do Renato Russo, a Leonice — as manias que aparecem na letra são dela. E tem um motivo curioso pra música existir: como diziam muito que o Legião era pessimista demais, o Renato quis fazer algo pra cima de propósito. Saiu uma das músicas mais queridas do rock brasileiro.',
     teoria:
-      'Ela usa a sequência de quatro acordes mais comum da música pop ocidental — a mesma que sustenta um número absurdo de sucessos no mundo inteiro. A prova de que originalidade não está na harmonia: o que faz essa música ser inconfundível é a letra em forma de história, com nome, rotina e detalhe. Harmonia comum, narrativa única.',
+      'Mi, Lá, Ré e volta pro Mi. Os dois primeiros são o I e o IV, os acordes mais previsíveis que existem. O terceiro é que faz a música: em mi maior o sétimo grau é ré SUSTENIDO, então esse ré natural vem de fora da escala. É o mesmo tipo de truque do Creep, num acorde diferente. Onde a teoria de escola mandaria um Si (o V, que puxa de volta pra casa), a música põe um Ré que não puxa pra lugar nenhum — e é daí que vem a sensação de estrada aberta em vez de conclusão. Aperte "ouvir sem o truque" e escute a diferença: com o V ela vira quadradinha na hora.',
     camadas: [
       {
         instrumento: 'guitarra',
@@ -417,9 +447,15 @@ export const MUSICAS: Musica[] = [
   },
 ]
 
-export function pcDoGrau(m: Musica, grau: number): PitchClass {
+export function pcDoGrau(m: Musica, grau: number, alteracao = 0): PitchClass {
   const tab = m.modo === 'maior' ? INTERVALO_DO_GRAU_MAIOR : INTERVALO_DO_GRAU_MENOR
-  return ((((m.tonica + tab[grau - 1]) % 12) + 12) % 12) as PitchClass
+  return ((((m.tonica + tab[grau - 1] + alteracao) % 12) + 12) % 12) as PitchClass
+}
+
+/** A nota de um trecho, já com a alteração aplicada. Use esta sempre que
+ *  houver um Trecho na mão — pcDoGrau sozinho ignora o ♭ e toca errado. */
+export function pcDoTrecho(m: Musica, t: Trecho): PitchClass {
+  return pcDoGrau(m, t.grau, t.alteracao ?? 0)
 }
 
 /** Qualidade do acorde: a do campo harmônico, ou a emprestada quando a
@@ -436,10 +472,11 @@ export function qualidadeDoGrau(m: Musica, grau: number): ChordQuality {
 const ROMANOS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 export function romanoDoTrecho(m: Musica, t: Trecho): string {
   const q = qualidadeDoTrecho(m, t)
+  const sinal = t.alteracao === -1 ? '♭' : t.alteracao === 1 ? '♯' : ''
   const base = ROMANOS[t.grau - 1]
-  if (q === 'menor') return base.toLowerCase()
-  if (q === 'diminuto') return base.toLowerCase() + '°'
-  return base
+  if (q === 'menor') return sinal + base.toLowerCase()
+  if (q === 'diminuto') return sinal + base.toLowerCase() + '°'
+  return sinal + base
 }
 
 export function romano(m: Musica, grau: number): string {
@@ -452,6 +489,20 @@ export function romano(m: Musica, grau: number): string {
 
 export function duracaoEmTempos(m: Musica): number {
   return m.progressao.reduce((soma, t) => soma + t.tempos, 0)
+}
+
+/** A levada codificada pra viajar na URL, pra Groove Machine abrir ela.
+ *
+ *  POR QUE ISSO EXISTE: o kit de quatro peças e a grade de 16 passos não
+ *  seguram o que uma bateria de verdade faz nessas músicas — cross-stick,
+ *  chimbal aberto, flam, ghost note, subdivisão ternária. O que toca aqui é a
+ *  levada do ESTILO, não transcrição da gravação, e dizer isso é mais honesto
+ *  que fingir precisão. Mas dizer não basta: quem toca bateria consegue
+ *  consertar, então a levada abre na Groove Machine pra ser mexida e ouvida. */
+export function levadaParaUrl(m: Musica): string {
+  const bits = (v: boolean[]) => v.map((x) => (x ? '1' : '0')).join('')
+  const trilhas = [m.bateria.chimbal, m.bateria.caixa, m.bateria.tom, m.bateria.bumbo]
+  return `/groove?levada=${trilhas.map(bits).join('-')}&bpm=${m.bpm}&de=${encodeURIComponent(m.titulo)}`
 }
 
 /** Onde ouvir o original. Busca em vez de link direto porque id de vídeo
@@ -472,11 +523,15 @@ export function linkDoOriginal(m: Musica): string {
  *  sente a diferença" — mandar a pessoa experimentar sozinha, tendo um
  *  tocador na tela, era a própria falha da ferramenta. */
 export function semOTruque(m: Musica): Trecho[] {
+  // quando a música declara a própria versão óbvia, é ela que vale: tirar o
+  // ♭VII de Eduardo e Mônica deixaria um VII diminuto que ninguém tocaria.
+  // A comparação honesta é contra o V, que é o que a cartilha mandaria.
+  if (m.semTruque) return m.semTruque
   return m.progressao.map(({ grau, tempos }) => ({ grau, tempos }))
 }
 
 export function temTruque(m: Musica): boolean {
-  return m.progressao.some((t) => t.emprestado)
+  return !!m.semTruque || m.progressao.some((t) => t.emprestado)
 }
 
 /** Troca um acorde da sequência. O que sai é uma progressão nova, tocável na

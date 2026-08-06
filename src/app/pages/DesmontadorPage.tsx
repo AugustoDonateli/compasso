@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   duracaoEmTempos,
+  levadaParaUrl,
   linkDoOriginal,
   MUSICAS,
   PASSOS,
   pcDoGrau,
+  pcDoTrecho,
   qualidadeDoGrau,
   qualidadeDoTrecho,
   romano,
@@ -101,15 +104,22 @@ export function DesmontadorPage() {
       progressao.length !== musica.progressao.length ||
       progressao.some((t, i) => {
         const o = musica.progressao[i]
-        return t.grau !== o.grau || qualidadeDoTrecho(musica, t) !== qualidadeDoTrecho(musica, o)
+        return (
+          t.grau !== o.grau ||
+          (t.alteracao ?? 0) !== (o.alteracao ?? 0) ||
+          qualidadeDoTrecho(musica, t) !== qualidadeDoTrecho(musica, o)
+        )
       }),
     [progressao, musica],
   )
 
   const trechoAtual = tocando ? trechoNoTempo(musica, tempo) : -1
   const trechoVisivel = editando ?? (trechoAtual >= 0 ? trechoAtual : -1)
-  const grauAtual = trechoVisivel >= 0 ? progressao[trechoVisivel]?.grau ?? null : null
-  const pcAtual = grauAtual ? pcDoGrau(musica, grauAtual) : null
+  const trechoEmFoco = trechoVisivel >= 0 ? (progressao[trechoVisivel] ?? null) : null
+  const grauAtual = trechoEmFoco?.grau ?? null
+  // pcDoTrecho, não pcDoGrau: o ♭VII de Eduardo e Mônica acenderia a nota
+  // errada no braço se a alteração fosse ignorada aqui
+  const pcAtual = trechoEmFoco ? pcDoTrecho(musica, trechoEmFoco) : null
   const qualidadeAtual =
     trechoVisivel >= 0 && progressao[trechoVisivel]
       ? qualidadeDoTrecho(musica, progressao[trechoVisivel])
@@ -165,7 +175,7 @@ export function DesmontadorPage() {
         return
       }
 
-      const pc = pcDoGrau(m, t.grau)
+      const pc = pcDoTrecho(m, t)
 
       if (ligadas.harmonia && m.levada.includes(noCompasso)) {
         const pcs = chordPcs(pc, qualidadeDoTrecho(m, t))
@@ -319,6 +329,22 @@ export function DesmontadorPage() {
             <span className="type-label text-[#8a8075]">
               as pistas · desligue uma e ouça o que sobra
             </span>
+            {/* Dito na cara: um kit de quatro peças numa grade de 16 passos não
+                segura cross-stick, chimbal aberto, flam, ghost note nem
+                subdivisão ternária. Chamar isso de transcrição seria mentira, e
+                quem toca bateria ouve a mentira na primeira volta. */}
+            <p className="mt-2 max-w-2xl text-sm text-[#8a8075]">
+              a bateria aqui é a levada do <span className="text-[#a69c90]">estilo</span>, não
+              transcrição da gravação — o kit tem quatro peças e a grade tem 16 passos, então
+              cross-stick, chimbal aberto e virada ficam de fora.{' '}
+              <Link
+                to={levadaParaUrl(musica)}
+                className="border-b border-[#332d27] text-[var(--timbre)] transition-colors hover:border-[var(--timbre)]"
+              >
+                abra na groove machine e conserte
+              </Link>
+              .
+            </p>
             <div className="mt-3 flex flex-wrap gap-3">
               {(Object.keys(NOME_DA_PISTA) as Array<keyof Pistas>).map((p) => {
                 const on = pistas[p]
@@ -357,7 +383,7 @@ export function DesmontadorPage() {
               {progressao.map((t, i) => {
                 const soando = i === trechoAtual
                 const aberto = i === editando
-                const pc = pcDoGrau(musica, t.grau)
+                const pc = pcDoTrecho(musica, t)
                 const mudou =
                   musica.progressao[i] &&
                   (t.grau !== musica.progressao[i].grau ||
@@ -505,7 +531,7 @@ export function DesmontadorPage() {
               <span className="type-label" style={{ color: 'var(--timbre)' }}>
                 {noteSolfejo(spellPc(pcAtual!))}
                 {qualidadeAtual === 'menor' ? 'm' : qualidadeAtual === 'diminuto' ? '°' : ''} ·
-                grau {romano(musica, grauAtual)}
+                grau {romanoDoTrecho(musica, trechoEmFoco!)}
               </span>
             )}
           </div>
