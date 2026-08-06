@@ -337,12 +337,14 @@ function jaConhece(p: UserProgress | null): boolean {
   return !!p && (p.completed.length > 0 || p.xp > 0)
 }
 
-export function HomePage() {
+/** `sempreAbertura` é a rota /abertura: mostra a apresentação mesmo pra quem já
+ *  tem progresso. Sem ela, quem já usou o site nunca mais conseguia ver a
+ *  landing — que é justamente o que a pessoa manda pro amigo. */
+export function HomePage({ sempreAbertura = false }: { sempreAbertura?: boolean }) {
   const [theme, setThemeState] = useState<Theme>(getTheme)
   const [, setReady] = useState(false)
   const [progresso, setProgresso] = useState<UserProgress | null>(null)
   const [carregou, setCarregou] = useState(false)
-  const [forcarLanding, setForcarLanding] = useState(false)
 
   useEffect(() => {
     // mostra o local na hora (não espera rede) e junta com o servidor depois
@@ -359,13 +361,12 @@ export function HomePage() {
   // enquanto não sabe quem é, não pisca nem uma coisa nem outra
   if (!carregou) return <div className="min-h-screen bg-base" />
 
-  if (jaConhece(progresso) && !forcarLanding) {
+  if (jaConhece(progresso) && !sempreAbertura) {
     return (
       <Painel
         progresso={progresso!}
         instrumento={instrumento}
         tipo={(localStorage.getItem('compasso.tipoTrilha') as 'instrumento' | 'teoria') ?? 'instrumento'}
-        onVerLanding={() => setForcarLanding(true)}
       />
     )
   }

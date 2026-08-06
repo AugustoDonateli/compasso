@@ -17,6 +17,10 @@ const FERRAMENTAS = [
   { to: '/braco', nome: 'mapa das notas' },
   { to: '/desmontador', nome: 'desmontador' },
   { to: '/groove', nome: 'groove' },
+  /* a abertura fica por último e é a única que não é ferramenta: de dentro de
+     qualquer tela dá pra voltar pra apresentação. Antes ela era um estado
+     escondido da home e quem já tinha progresso nunca mais chegava lá. */
+  { to: '/abertura', nome: 'abertura' },
 ]
 
 export function Nav() {

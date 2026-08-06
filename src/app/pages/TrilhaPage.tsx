@@ -12,6 +12,7 @@ import {
   type Unidade,
 } from '../../content/trilha'
 import { award, getProgress, setStepDone } from '../../progress'
+import { aplicarTimbre } from '../../design/timbre'
 import {
   preloadDrumKit,
   preloadInstrument,
@@ -69,6 +70,9 @@ export function TrilhaPage() {
 
   useEffect(() => {
     localStorage.setItem(SOM_KEY, som)
+    // trocar de instrumento repinta o site inteiro: a segunda cor é o timbre
+    // de quem toca, não uma cor do produto
+    aplicarTimbre(som)
     preloadInstrument(somDeNotas(som))
     if (som === 'bateria') preloadDrumKit()
   }, [som])

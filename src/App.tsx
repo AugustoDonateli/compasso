@@ -11,6 +11,7 @@ import { RankingPage } from './app/pages/RankingPage'
 import { Nav } from './app/Nav'
 import { attachGlobalUnlock } from './audio/engine'
 import { startFaviconMetronome } from './design/favicon'
+import { aplicarTimbre } from './design/timbre'
 import { useLenisGsap } from './motion/useLenisGsap'
 
 /* Casca do Compasso: tema, áudio, favicon, rolagem e rotas.
@@ -30,6 +31,7 @@ function App() {
 
   // primeiro gesto destrava o áudio; o favicon pulsa no andamento
   useEffect(() => {
+    aplicarTimbre() // pinta a raiz com a cor do instrumento salvo
     const detachUnlock = attachGlobalUnlock()
     const stopFavicon = startFaviconMetronome()
     return () => {
@@ -44,6 +46,10 @@ function App() {
       <Nav />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        {/* a abertura tem endereço próprio: de dentro de qualquer ferramenta
+            dá pra voltar pra ela. Antes ela era um estado escondido da home,
+            e quem já tinha progresso não conseguia mais chegar lá. */}
+        <Route path="/abertura" element={<HomePage sempreAbertura />} />
         <Route path="/braco" element={<BracoPage />} />
         <Route path="/groove" element={<GroovePage />} />
         <Route path="/ouvido" element={<OuvidoPage />} />

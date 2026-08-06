@@ -64,6 +64,77 @@
   --panel-accent: #e0a34a;
 }
 
+/* ---------- Timbre: a cor do SEU instrumento ----------
+
+   O latão é do SITE: títulos, botões, o que você faz. O timbre é SEU: o som
+   soando, a nota certa, o LED aceso. Duas famílias com papéis diferentes, em
+   vez de um acento só carregando tudo — era isso que fazia a página ler como
+   plana, não a falta de cores.
+
+   Contraste medido contra o fundo de cada tema; mínimo de 4,5:1 em todos. */
+
+:root {
+  --timbre: #7fd1a0; /* guitarra: verde de mostrador de afinador */
+}
+:root[data-instrumento='violao'] {
+  --timbre: #a8b36a; /* sálvia amadeirada */
+}
+:root[data-instrumento='baixo'] {
+  --timbre: #c97b3a; /* âmbar profundo */
+}
+:root[data-instrumento='piano'] {
+  --timbre: #a8c4d0; /* marfim frio */
+}
+:root[data-instrumento='bateria'] {
+  /* o #d9483b do desenho dava 4,48:1 — a um décimo do mínimo. Clareado. */
+  --timbre: #e0574a; /* vermelho de luz de gravação */
+}
+:root[data-instrumento='violino'] {
+  --timbre: #b48ead; /* malva */
+}
+
+/* No tema claro os mesmos timbres precisam escurecer, senão somem no papel */
+:root[data-theme='light'] {
+  --timbre: #276b4e;
+}
+:root[data-theme='light'][data-instrumento='violao'] {
+  --timbre: #5e6b2e;
+}
+:root[data-theme='light'][data-instrumento='baixo'] {
+  --timbre: #8a4a18;
+}
+:root[data-theme='light'][data-instrumento='piano'] {
+  --timbre: #3e6273;
+}
+:root[data-theme='light'][data-instrumento='bateria'] {
+  --timbre: #a6301f;
+}
+:root[data-theme='light'][data-instrumento='violino'] {
+  --timbre: #6e4a68;
+}
+
+/* ---------- Luz e sombra ----------
+
+   A sombra é FRIA e a aresta de cima é QUENTE, sempre — inclusive quando o
+   timbre é quente (baixo, bateria). É esse par que dá profundidade: material
+   de verdade sob luz de verdade tem sombra que puxa pro azul. Preto puro só
+   escurece, não afunda. */
+
+:root {
+  --sombra-baixa:
+    0 1px 0 rgb(13 24 30 / 0.5), 0 2px 6px -1px rgb(9 18 24 / 0.45);
+  --sombra-alta:
+    0 1px 0 rgb(13 24 30 / 0.55), 0 14px 34px -10px rgb(7 15 21 / 0.75);
+  --luz-topo: inset 0 1px 0 rgb(255 242 225 / 0.07);
+}
+:root[data-theme='light'] {
+  --sombra-baixa:
+    0 1px 0 rgb(120 130 140 / 0.16), 0 2px 6px -1px rgb(90 105 120 / 0.14);
+  --sombra-alta:
+    0 1px 0 rgb(120 130 140 / 0.2), 0 14px 34px -10px rgb(70 88 105 / 0.28);
+  --luz-topo: inset 0 1px 0 rgb(255 255 255 / 0.8);
+}
+
 /* ---------- Ponte pro Tailwind (utilities geradas a partir dos tokens) ---------- */
 
 @theme inline {
@@ -76,6 +147,7 @@
   --color-ink-muted: var(--text-muted);
   --color-brass: var(--accent);
   --color-brass-dim: var(--accent-dim);
+  --color-timbre: var(--timbre);
   --color-ok: var(--ok);
   --color-err: var(--err);
 
@@ -132,6 +204,54 @@ body {
 ::selection {
   background-color: var(--accent);
   color: var(--bg-base);
+}
+
+/* ---------- Grão ----------
+
+   Uma camada de ruído fixa por cima da página inteira. É o detalhe mais barato
+   e mais eficaz contra cara de "gerado": cor chapada é digital, cor com grão é
+   material — papel, feltro, pintura de amplificador. Fica em 3,5% porque a
+   intenção é você não conseguir apontar o que mudou, só sentir que parou de
+   parecer plástico.
+
+   feTurbulence gerado aqui mesmo em SVG: zero requisição, zero imagem. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0.038;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23r)'/%3E%3C/svg%3E");
+}
+:root[data-theme='light'] body::after {
+  opacity: 0.055; /* no papel claro o grão some antes; precisa de um pouco mais */
+  mix-blend-mode: multiply;
+}
+
+/* ---------- Relevo ----------
+
+   Superfície que sobe da página: sombra fria embaixo, luz quente na aresta de
+   cima. Substitui a borda de 1px que fazia tudo virar caixinha. */
+.relevo {
+  box-shadow: var(--sombra-baixa), var(--luz-topo);
+}
+.relevo-alto {
+  box-shadow: var(--sombra-alta), var(--luz-topo);
+}
+
+/* LED aceso: o brilho VAZA pro entorno, como luz de verdade num painel
+   escuro. Sem o vazamento é só um retângulo colorido. */
+.led {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--timbre) 45%, transparent),
+    0 0 10px -1px color-mix(in srgb, var(--timbre) 55%, transparent),
+    0 0 28px -6px color-mix(in srgb, var(--timbre) 45%, transparent);
+}
+/* texto que "acende" — o halo faz o número parecer emitir, não pintar */
+.aceso {
+  color: var(--timbre);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--timbre) 45%, transparent);
 }
 
 /* ---------- Motivos de partitura ---------- */
