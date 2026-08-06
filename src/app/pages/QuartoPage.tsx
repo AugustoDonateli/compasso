@@ -24,11 +24,15 @@ const DESKTOP = {
   padrao: '/assets/img/quarto-desktop-1920.webp',
   conjunto:
     '/assets/img/quarto-desktop-1440.webp 1440w, /assets/img/quarto-desktop-1920.webp 1920w, /assets/img/quarto-desktop-2560.webp 2560w',
+  largura: 4096,
+  altura: 2294,
 }
 const MOBILE = {
   padrao: '/assets/img/quarto-mobile-1400.webp',
   conjunto:
     '/assets/img/quarto-mobile-900.webp 900w, /assets/img/quarto-mobile-1400.webp 1400w, /assets/img/quarto-mobile-2294.webp 2294w',
+  largura: 2294,
+  altura: 4096,
 }
 
 /** Qual foto usar. Não é só largura: a composição em pé é OUTRA foto, com

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   centro,
+  paraTela,
   clipPath,
   OBJETOS_DESKTOP,
   OBJETOS_MOBILE,
@@ -29,11 +30,32 @@ import { getProgress } from '../../progress'
 export interface Foto {
   padrao: string
   conjunto: string
+  /** proporção do arquivo, pra desfazer o corte do object-cover */
+  largura: number
+  altura: number
 }
 
 interface Props {
   foto: Foto
   retrato: boolean
+}
+
+/** Tamanho real da área do quarto na tela. Sem isso não dá pra converter
+ *  coordenada da foto em coordenada da tela. */
+function useCaixa() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [caixa, setCaixa] = useState({ largura: 0, altura: 0 })
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const medir = () =>
+      setCaixa({ largura: el.clientWidth, altura: el.clientHeight })
+    medir()
+    const obs = new ResizeObserver(medir)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return { ref, caixa }
 }
 
 export function Quarto({ foto, retrato }: Props) {
@@ -59,8 +81,12 @@ export function Quarto({ foto, retrato }: Props) {
   const meu = instrumentoSalvo()
   const visiveis = objetos.filter((o) => !o.so || o.so.includes(meu))
 
+  const { ref, caixa } = useCaixa()
+  const naTela = (forma: ObjetoDoQuarto['forma']) =>
+    paraTela(forma, caixa, { largura: foto.largura, altura: foto.altura })
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0b0908]">
+    <div ref={ref} className="relative h-screen overflow-hidden bg-[#0b0908]">
       {/* a foto, sangrando na tela inteira */}
       <img
         src={foto.padrao}
@@ -79,13 +105,14 @@ export function Quarto({ foto, retrato }: Props) {
       {visiveis.map((o) => {
         const on = aceso === o.id
         const livre = disponivel(o)
-        const [cx, cy] = centro(o.forma)
+        const naT = naTela(o.forma)
+        const [cx, cy] = centro(naT)
         return (
           <div key={o.id}>
             {/* a mesma foto, recortada na silhueta e clareada */}
             <div
               className="pointer-events-none absolute inset-0 transition-opacity duration-500"
-              style={{ clipPath: clipPath(o.forma), opacity: on ? 1 : livre ? 0.22 : 0 }}
+              style={{ clipPath: clipPath(naT), opacity: on ? 1 : livre ? 0.22 : 0 }}
             >
               <img
                 src={foto.padrao}
@@ -127,7 +154,7 @@ export function Quarto({ foto, retrato }: Props) {
               onBlur={() => setAceso((v) => (v === o.id ? null : v))}
               onClick={() => livre && navegar(o.para)}
               className="absolute inset-0 disabled:cursor-not-allowed"
-              style={{ clipPath: clipPath(o.forma) }}
+              style={{ clipPath: clipPath(naT) }}
             />
           </div>
         )
