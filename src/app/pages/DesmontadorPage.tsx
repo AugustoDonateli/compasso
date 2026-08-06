@@ -71,7 +71,7 @@ export function DesmontadorPage() {
   const [pistas, setPistas] = useState<Pistas>(TODAS)
   const [fator, setFator] = useState(1) // 0,5 a 1 do andamento original
   const [tocando, setTocando] = useState(false)
-  const [tempo, setTempo] = useState(0)
+  const [trechoTocando, setTrechoTocando] = useState(-1)
   const [editando, setEditando] = useState<number | null>(null)
   const [semAudio, setSemAudio] = useState(false)
   const pararRef = useRef<(() => void) | null>(null)
@@ -114,7 +114,7 @@ export function DesmontadorPage() {
     [progressao, musica],
   )
 
-  const trechoAtual = tocando ? trechoNoTempo(musica, tempo) : -1
+  const trechoAtual = tocando ? trechoTocando : -1
   const trechoVisivel = editando ?? (trechoAtual >= 0 ? trechoAtual : -1)
   const trechoEmFoco = trechoVisivel >= 0 ? (progressao[trechoVisivel] ?? null) : null
   const grauAtual = trechoEmFoco?.grau ?? null
@@ -141,7 +141,7 @@ export function DesmontadorPage() {
     pararRef.current?.()
     pararRef.current = null
     setTocando(false)
-    setTempo(0)
+    setTrechoTocando(-1)
   }, [])
 
   const tocar = useCallback(async () => {
@@ -171,6 +171,7 @@ export function DesmontadorPage() {
     // milissegundos entre as cordas que faz soar tocado em vez de sintetizado
     const arpejo = m.som === 'piano' ? 0 : 0.028
     let passo = 0
+    let ultimoTrecho = -1
 
     const id = transport.scheduleRepeat((time) => {
       const p = passo % totalPassos
@@ -181,6 +182,23 @@ export function DesmontadorPage() {
       if (!t) {
         passo += 1
         return
+      }
+
+      /* O DESTAQUE SAI DAQUI, do relógio do áudio — não de um laço de
+         animação lendo a posição do transporte.
+
+         Era assim antes e travava: `requestAnimationFrame` não roda em toda
+         situação (aba oculta, janela não composta, economia de bateria), e
+         quando ele não roda o `setTempo` nunca acontece. O áudio seguia
+         trocando de acorde e a tela ficava presa no primeiro pra sempre — o
+         defeito que o Augusto viu. O relógio do áudio, esse, nunca para.
+
+         O agendamento tem ~0,1s de antecedência, então o acorde acende um
+         piscar antes de soar. Num acorde que dura segundos, ninguém percebe —
+         e é infinitamente melhor que não acender nunca. */
+      if (trecho !== ultimoTrecho) {
+        ultimoTrecho = trecho
+        setTrechoTocando(trecho)
       }
 
       const pc = pcDoTrecho(m, t)
@@ -221,20 +239,7 @@ export function DesmontadorPage() {
     transport.start()
     setTocando(true)
 
-    /* O visual lê a posição do transporte a cada quadro em vez de consumir uma
-       fila agendada (Tone.Draw). Com a aba em segundo plano o rAF pausa; a
-       fila acumularia eventos vencidos, que são descartados, e o destaque
-       travaria ao voltar. Lendo a posição, ressincroniza no primeiro quadro. */
-    let raf = 0
-    const desenhar = () => {
-      raf = requestAnimationFrame(desenhar)
-      if (transport.state !== 'started') return
-      setTempo(Math.floor(transport.ticks / transport.PPQ))
-    }
-    raf = requestAnimationFrame(desenhar)
-
     pararRef.current = () => {
-      cancelAnimationFrame(raf)
       transport.clear(id)
       transport.stop()
       transport.position = 0

@@ -51,6 +51,23 @@ export function useMicrophone() {
 
       const ctx = new AudioContext()
       ctxRef.current = ctx
+
+      /* Um AudioContext recém-criado pode nascer SUSPENSO, e suspenso ele
+         entrega buffers de silêncio pra sempre. O afinador ficava aberto,
+         dizendo "ouvindo", mostrando "—" e sem reagir a nada — que é
+         exatamente "não está funcionando". Mesma família do defeito que
+         travava o transporte: nunca acreditar que o contexto está tocando
+         sem perguntar pra ele. */
+      if (ctx.state === 'suspended') await ctx.resume()
+      if (ctx.state !== 'running') {
+        stream.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+        void ctx.close()
+        ctxRef.current = null
+        setEstado('erro')
+        return
+      }
+
       const fonte = ctx.createMediaStreamSource(stream)
       const analisador = ctx.createAnalyser()
       analisador.fftSize = TAMANHO_BUFFER
@@ -61,6 +78,9 @@ export function useMicrophone() {
 
       const loop = () => {
         rafRef.current = requestAnimationFrame(loop)
+        // o contexto pode ser suspenso pelo sistema no meio do uso (tela
+        // apagando, chamada entrando). Retoma em vez de ficar mudo.
+        if (ctx.state === 'suspended') void ctx.resume()
         analisador.getFloatTimeDomainData(buffer)
         const freq = detectarFrequencia(buffer, ctx.sampleRate)
 

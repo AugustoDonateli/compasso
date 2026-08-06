@@ -14,22 +14,22 @@ export function getBpm(): number {
   return Math.round(Tone.getTransport().bpm.value)
 }
 
-/** Passo de semicolcheia atual, lido da posição real do transporte. */
-export function currentSixteenth(steps = 16): number {
-  const transport = Tone.getTransport()
-  const ticksPerSixteenth = transport.PPQ / 4
-  return Math.floor(transport.ticks / ticksPerSixteenth) % steps
-}
-
 /** Agenda um passo de semicolcheia em loop. Retorna a função de parada.
  *
  *  Duas camadas deliberadamente separadas:
  *  - onStep roda no relógio do ÁUDIO (com lookahead) — use `time` pra disparar som.
- *  - onDraw roda num loop de animação que LÊ a posição do transporte, em vez de
- *    reproduzir uma fila agendada. Isso importa: com a aba oculta o rAF pausa, e
- *    uma fila (Tone.Draw) acumularia eventos vencidos que são descartados — o
- *    playhead travaria ou pularia ao voltar. Lendo a posição, ele ressincroniza
- *    sozinho no primeiro quadro. */
+ *  - onDraw é disparado no INSTANTE em que aquele passo soa.
+ *
+ *  DEFEITO CORRIGIDO EM 2026-08-06: o desenho rodava num laço de
+ *  `requestAnimationFrame` lendo a posição do transporte. Quando o rAF não roda
+ *  — aba oculta, janela não composta, economia de bateria — o playhead
+ *  simplesmente nunca aparecia, enquanto o som seguia normal. Foi assim que o
+ *  destaque de acorde do Desmontador ficou preso no primeiro acorde.
+ *
+ *  Agora cada passo agenda o próprio desenho com `setTimeout`, com o atraso
+ *  exato que falta pro som sair (`time - agora`). Sem rAF no caminho, e sem o
+ *  adiantamento de ~0,1s que apareceria se o desenho saísse direto do callback
+ *  de áudio — o que num sequenciador de semicolcheias seria bem visível. */
 export async function startSixteenthLoop(
   onStep: (step: number, time: number) => void,
   onDraw?: (step: number) => void,
@@ -38,32 +38,28 @@ export async function startSixteenthLoop(
   await ensureAudio()
   const transport = Tone.getTransport()
   let step = 0
+  const pendentes = new Set<ReturnType<typeof setTimeout>>()
 
   const id = transport.scheduleRepeat((time) => {
     onStep(step, time)
+    if (onDraw) {
+      const esse = step
+      const faltam = Math.max(0, (time - Tone.now()) * 1000)
+      const t = setTimeout(() => {
+        pendentes.delete(t)
+        onDraw(esse)
+      }, faltam)
+      pendentes.add(t)
+    }
     step = (step + 1) % steps
   }, '16n')
-
-  let raf = 0
-  if (onDraw) {
-    let lastDrawn = -1
-    const tick = () => {
-      raf = requestAnimationFrame(tick)
-      if (transport.state !== 'started') return
-      const now = currentSixteenth(steps)
-      if (now !== lastDrawn) {
-        lastDrawn = now
-        onDraw(now)
-      }
-    }
-    raf = requestAnimationFrame(tick)
-  }
 
   transport.position = 0
   transport.start()
 
   return () => {
-    cancelAnimationFrame(raf)
+    pendentes.forEach(clearTimeout)
+    pendentes.clear()
     transport.clear(id)
     transport.stop()
     transport.position = 0
