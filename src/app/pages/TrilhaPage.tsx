@@ -1,4 +1,5 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import gsap from 'gsap'
 import { Link } from 'react-router-dom'
 import { Caminho } from '../trilha/Caminho'
 import { Sessao } from '../trilha/Sessao'
@@ -13,6 +14,8 @@ import {
 } from '../../content/trilha'
 import { award, getProgress, setStepDone } from '../../progress'
 import { aplicarTimbre } from '../../design/timbre'
+import { bancada } from '../../content/estudio'
+import { somConquista } from '../../audio/feedback'
 import {
   preloadDrumKit,
   preloadInstrument,
@@ -44,10 +47,128 @@ function somDeNotas(i: TrilhaInstrumento): InstrumentSoundId {
   return i === 'bateria' ? 'piano' : i
 }
 
+interface Resultado {
+  acertos: number
+  total: number
+  xpAntes: number
+  xpDepois: number
+}
+
+/** O fim da lição, que é onde a recompensa acontece.
+ *
+ *  Duas coisas diferentes podem ter acontecido, e elas merecem tratamento
+ *  diferente: ou uma PEÇA da bancada foi destravada — e aí isso é o assunto —
+ *  ou o xp andou em direção à próxima, e o que importa é ver a barra se mexer.
+ *  Ver o preenchimento acontecer é o que dá sensação de avanço; uma barra que
+ *  já aparece cheia não avança nada. */
+function FimDaLicao({
+  resultado,
+  som,
+  onSeguir,
+}: {
+  resultado: Resultado
+  som: TrilhaInstrumento
+  onSeguir: () => void
+}) {
+  const antes = bancada(resultado.xpAntes, som)
+  const depois = bancada(resultado.xpDepois, som)
+  const novas = depois.liberadas.filter((p) => !antes.liberadas.some((a) => a.id === p.id))
+  const barra = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (novas.length) somConquista()
+  }, [novas.length])
+
+  useEffect(() => {
+    if (!barra.current || !depois.proxima) return
+    const anim = gsap.fromTo(
+      barra.current,
+      { scaleX: novas.length ? 0 : antes.fracao },
+      { scaleX: depois.fracao, duration: 1.1, ease: 'power2.out', delay: 0.35 },
+    )
+    return () => {
+      anim.kill()
+    }
+  }, [antes.fracao, depois.fracao, depois.proxima, novas.length])
+
+  return (
+    <div
+      className="relevo-alto mb-10 border-l-2 bg-[#1b1815] p-6 md:p-8"
+      style={{ borderLeftColor: novas.length ? 'var(--timbre)' : 'var(--ok)' }}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
+        <div>
+          <span
+            className="type-display text-2xl md:text-3xl"
+            style={{ color: novas.length ? 'var(--timbre)' : 'var(--ok)' }}
+          >
+            {novas.length ? 'Peça nova na bancada.' : 'Lição concluída.'}
+          </span>
+          <p className="mt-1 text-[#a69c90]">
+            {resultado.acertos} de {resultado.total} de primeira ·{' '}
+            <span className="aceso">+{resultado.acertos * 10} xp</span>
+          </p>
+        </div>
+        <button
+          onClick={onSeguir}
+          className="type-label flex min-h-11 items-center border px-5 transition-colors"
+          style={{ borderColor: 'var(--timbre)', color: 'var(--timbre)' }}
+        >
+          seguir
+        </button>
+      </div>
+
+      {novas.map((p) => (
+        <p key={p.id} className="mt-5">
+          <span className="type-display text-2xl md:text-3xl">{p.nome}</span>
+          <span className="ml-3 text-[#a69c90]">{p.faz}</span>
+          {p.para && (
+            <Link
+              to={p.para}
+              className="type-label ml-3 border-b transition-colors"
+              style={{ borderColor: 'var(--timbre)', color: 'var(--timbre)' }}
+            >
+              abrir
+            </Link>
+          )}
+        </p>
+      ))}
+
+      {/* pra onde o xp está indo. Sem isso o número sobe e não quer dizer nada. */}
+      {depois.proxima && (
+        <div className="mt-6 border-t border-[#332d27] pt-5">
+          <span className="type-label text-[#8a8075]">
+            próxima peça · {depois.proxima.nome}
+          </span>
+          <span className="mt-3 block h-px w-full bg-[#332d27]">
+            <span
+              ref={barra}
+              className="block h-px origin-left"
+              style={{ background: 'var(--timbre)', transform: 'scaleX(0)' }}
+            />
+          </span>
+          <span className="type-label mt-2 block text-[#8a8075]">
+            faltam <span className="aceso">{depois.falta}</span> xp · {depois.proxima.faz}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function TrilhaPage() {
   const [prog, setProg] = useState<UserProgress | null>(null)
   const [emAula, setEmAula] = useState<string | null>(null)
-  const [resultado, setResultado] = useState<{ acertos: number; total: number } | null>(null)
+  /* xpAntes viaja junto com o resultado porque a recompensa não é o número
+     que ficou: é o número ANDANDO em direção à próxima peça da bancada. Sem
+     guardar o valor anterior, a barra já apareceria cheia e a pessoa não veria
+     avanço nenhum — que era o laço quebrado no meio. */
+  const [resultado, setResultado] = useState<{
+    acertos: number
+    total: number
+    xpAntes: number
+    xpDepois: number
+  } | null>(null)
   const [guia, setGuia] = useState<Unidade | null>(null)
   const [trocandoSom, setTrocandoSom] = useState(false)
   const [som, setSom] = useState<TrilhaInstrumento>(() => {
@@ -84,13 +205,15 @@ export function TrilhaPage() {
   const concluir = useCallback(
     async (acertos: number, total: number) => {
       if (!emAula) return
+      const xpAntes = prog?.xp ?? 0
       await setStepDone(emAula, true)
       if (acertos > 0) await award(acertos * 10)
-      setProg(await getProgress())
-      setResultado({ acertos, total })
+      const depois = await getProgress()
+      setProg(depois)
+      setResultado({ acertos, total, xpAntes, xpDepois: depois.xp })
       setEmAula(null)
     },
-    [emAula],
+    [emAula, prog?.xp],
   )
 
   if (emAula) {
@@ -109,6 +232,7 @@ export function TrilhaPage() {
 
   const pct = progressoPct(concluidas, som, tipo)
   const nomeInstrumento = INSTRUMENTOS.find((x) => x.id === som)?.nome ?? som
+  const rumo = bancada(prog?.xp ?? 0, som)
 
   return (
     <div className="min-h-screen pt-[var(--altura-nav)] bg-[#12100e] text-[#f2ede6]">
@@ -120,14 +244,21 @@ export function TrilhaPage() {
             <span className="text-[#f2ede6]">{pct}%</span> da trilha
           </span>
           <span className="type-label text-[#a69c90]">
-            <span className="text-[#e0a34a]">{prog?.xp ?? 0}</span> xp
+            <span className="aceso">{prog?.xp ?? 0}</span> xp
           </span>
           <span className="type-label text-[#a69c90]">
             <span className="text-[#f2ede6]">{prog?.streak ?? 0}</span> dias
           </span>
+          {/* pra onde o xp está indo, sempre à vista. Um número que sobe sem
+              destino não é recompensa, é contador. */}
+          {rumo.proxima && (
+            <span className="type-label hidden text-[#8a8075] sm:inline">
+              <span className="aceso">{rumo.falta}</span> xp pra {rumo.proxima.nome.toLowerCase()}
+            </span>
+          )}
           <button
             onClick={() => setTrocandoSom((v) => !v)}
-            className="type-label border border-[#332d27] px-3 py-2 text-[#a69c90] transition-colors hover:border-[#e0a34a] hover:text-[#e0a34a]"
+            className="relevo type-label flex min-h-11 items-center border border-[#332d27] px-4 text-[#a69c90] transition-colors hover:border-[var(--timbre)] hover:text-[var(--timbre)]"
           >
             {nomeInstrumento} ▾
           </button>
@@ -144,11 +275,15 @@ export function TrilhaPage() {
                 setSom(x.id)
                 setTrocandoSom(false)
               }}
-              className={`type-label border px-4 py-3 transition-colors ${
+              /* o instrumento escolhido acende no PRÓPRIO timbre dele: você vê
+                 a cor do baixo antes de escolher o baixo */
+              data-timbre={x.id}
+              className="relevo type-label flex min-h-11 items-center border px-4 transition-colors"
+              style={
                 som === x.id
-                  ? 'border-[#e0a34a] bg-[#e0a34a] text-[#12100e]'
-                  : 'border-[#332d27] text-[#a69c90] hover:border-[#a69c90]'
-              }`}
+                  ? { borderColor: 'var(--timbre)', background: 'var(--timbre)', color: '#12100e' }
+                  : { borderColor: '#332d27', color: 'var(--timbre)' }
+              }
             >
               {x.nome}
             </button>
@@ -168,7 +303,7 @@ export function TrilhaPage() {
             <button
               key={t.id}
               onClick={() => setTipo(t.id)}
-              className={`type-label px-6 py-3 transition-colors ${k > 0 ? 'border-l border-[#332d27]' : ''} ${
+              className={`type-label flex min-h-11 items-center px-6 transition-colors ${k > 0 ? 'border-l border-[#332d27]' : ''} ${
                 tipo === t.id
                   ? 'bg-[#e0a34a] text-[#12100e]'
                   : 'text-[#a69c90] hover:bg-[#f2ede6]/5 hover:text-[#f2ede6]'
@@ -181,23 +316,11 @@ export function TrilhaPage() {
       </div>
 
       <main className="mx-auto max-w-6xl px-5 py-10 md:px-10 md:py-16">
-        {/* resultado da última lição, se houver */}
-        {resultado && (
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-l-4 border-[#6e8f5a] bg-[#6e8f5a]/10 p-6">
-            <div>
-              <span className="type-display text-2xl text-[#6e8f5a]">Lição concluída.</span>
-              <p className="mt-1 text-[#a69c90]">
-                {resultado.acertos} de {resultado.total} de primeira · +{resultado.acertos * 10} xp
-              </p>
-            </div>
-            <button
-              onClick={() => setResultado(null)}
-              className="type-label border border-[#6e8f5a] px-5 py-3 text-[#6e8f5a]"
-            >
-              seguir
-            </button>
-          </div>
-        )}
+        {/* O MOMENTO. A lição acabou — e aqui a pessoa vê pra onde o xp foi.
+            Antes era uma caixa verde dizendo "concluída", que informa e não
+            recompensa: o xp subia e nada no site indicava o que ele estava
+            destravando. É o laço quebrado no meio. */}
+        {resultado && <FimDaLicao resultado={resultado} som={som} onSeguir={() => setResultado(null)} />}
 
         <div className="grid items-start gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
           {/* A ÚNICA COISA À DIREITA: o próximo passo, enorme */}
@@ -215,13 +338,13 @@ export function TrilhaPage() {
                 </h1>
                 <button
                   onClick={() => setEmAula(proxima.licao.id)}
-                  className="type-label mt-10 w-full border-2 border-[#e0a34a] bg-[#e0a34a] px-10 py-6 text-base text-[#12100e] transition-transform hover:-translate-y-0.5 md:w-auto"
+                  className="relevo type-label mt-10 w-full border-2 border-[#e0a34a] bg-[#e0a34a] px-10 py-6 text-base text-[#12100e] transition-transform hover:-translate-y-0.5 md:w-auto"
                 >
                   começar · {proxima.licao.perguntas.length} perguntas
                 </button>
                 <button
                   onClick={() => setGuia(guia ? null : proxima.unidade)}
-                  className="type-label mt-6 block text-[#a69c90] underline underline-offset-4 transition-colors hover:text-[#a69c90]"
+                  className="type-label mt-6 flex min-h-11 items-center text-[#a69c90] underline underline-offset-4 transition-colors hover:text-[var(--timbre)]"
                 >
                   {guia ? 'esconder' : 'o que essa unidade ensina'}
                 </button>
