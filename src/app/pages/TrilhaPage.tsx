@@ -239,7 +239,10 @@ export function TrilhaPage() {
       {/* uma linha só de contexto — nada de grade de placar competindo */}
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#221e1a] px-5 py-5 md:px-10">
         <span />
-        <div className="flex items-center gap-6">
+        {/* quebra em duas linhas no celular em vez de esconder o rumo: o
+            "quanto falta pra próxima peça" é a informação nova e é justamente
+            no celular que ela mais importa */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <span className="type-label text-[#a69c90]">
             <span className="text-[#f2ede6]">{pct}%</span> da trilha
           </span>
@@ -252,7 +255,7 @@ export function TrilhaPage() {
           {/* pra onde o xp está indo, sempre à vista. Um número que sobe sem
               destino não é recompensa, é contador. */}
           {rumo.proxima && (
-            <span className="type-label hidden text-[#8a8075] sm:inline">
+            <span className="type-label text-[#8a8075]">
               <span className="aceso">{rumo.falta}</span> xp pra {rumo.proxima.nome.toLowerCase()}
             </span>
           )}
