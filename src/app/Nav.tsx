@@ -87,7 +87,14 @@ export function Nav() {
       }`}
     >
       <div className="flex items-center justify-between px-5 py-3 md:px-10">
-        <Link to="/" className="flex items-center gap-3" aria-label="Compasso, início">
+        {/* o -my-3 py-3 estica a área de toque pros 44px de dedo sem esticar a
+            barra: o padding entra pra quem toca, a margem negativa devolve pro
+            layout. A marca continua ocupando os mesmos 20px na tela. */}
+        <Link
+          to="/"
+          className="-my-3 flex items-center gap-3 py-3"
+          aria-label="Compasso, início"
+        >
           {/* a marca: as duas hastes da barra de compasso */}
           <span className="flex h-5 items-end gap-1">
             <span className="block h-5 w-[3px] bg-brass" />
@@ -111,10 +118,11 @@ export function Nav() {
           ))}
         </div>
 
-        {/* mobile: menu, porque 5 links não cabem em 375px */}
+        {/* mobile: menu, porque 5 links não cabem em 375px.
+            Mesmo truque da marca: 44px de alvo, barra do mesmo tamanho. */}
         <button
           onClick={() => setMenuAberto((v) => !v)}
-          className="type-label border border-line px-3 py-2 text-ink-2 md:hidden"
+          className="type-label -my-2 flex min-h-11 items-center border border-line px-4 text-ink-2 md:hidden"
           aria-expanded={menuAberto}
         >
           {menuAberto ? 'fechar' : 'menu'}
