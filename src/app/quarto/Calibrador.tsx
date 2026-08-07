@@ -105,6 +105,34 @@ export function Calibrador({ foto }: { foto: string }) {
         clique em volta do objeto · enter fecha a forma · backspace desfaz um ponto · esc limpa
       </p>
 
+      {/* ESCOLHER O QUE ESTOU CONTORNANDO.
+          Sem isto, o calibrador rotulava pela ordem DELE. Na primeira
+          calibração o Augusto contornou na ordem dele — caderno antes do
+          vinil — e os quatro últimos vieram com o nome trocado. Precisei
+          conferir cada forma contra a foto pra descobrir. Agora ele escolhe. */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {PAPEIS.map((p, k) => {
+          const feito = !!prontos[p.id]
+          const atual = k === i
+          return (
+            <button
+              key={p.id}
+              onClick={() => {
+                setPontos([])
+                setI(k)
+              }}
+              className="type-label flex min-h-11 items-center gap-2 border px-4 transition-colors"
+              style={{
+                borderColor: atual ? 'var(--accent)' : feito ? 'var(--ok)' : 'var(--border)',
+                color: atual ? 'var(--accent)' : feito ? 'var(--ok)' : 'var(--text-2)',
+              }}
+            >
+              {feito ? '✓' : '○'} {p.nome}
+            </button>
+          )
+        })}
+      </div>
+
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           onClick={fechar}

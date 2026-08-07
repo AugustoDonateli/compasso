@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   caixaDe,
@@ -86,8 +86,17 @@ export function Quarto({ foto, retrato }: Props) {
   const visiveis = objetos.filter((o) => !o.so || o.so.includes(meu))
 
   const { ref, caixa } = useCaixa()
-  const naTela = (forma: ObjetoDoQuarto['forma']) =>
-    paraTela(forma, caixa, { largura: foto.largura, altura: foto.altura })
+
+  /* Converte uma vez por tamanho de tela, não a cada passada de mouse: a
+     silhueta da bateria tem 212 pontos, e sem isso as sete seriam remapeadas
+     e reescritas como texto a cada acender e apagar. */
+  const formas = useMemo(() => {
+    const m = new Map<string, ObjetoDoQuarto['forma']>()
+    for (const o of visiveis) {
+      m.set(o.id, paraTela(o.forma, caixa, { largura: foto.largura, altura: foto.altura }))
+    }
+    return m
+  }, [visiveis, caixa, foto.largura, foto.altura])
 
   return (
     <div ref={ref} className="relative h-screen overflow-hidden bg-[#0b0908]">
@@ -109,7 +118,7 @@ export function Quarto({ foto, retrato }: Props) {
       {visiveis.map((o, i) => {
         const on = aceso === o.id
         const livre = disponivel(o)
-        const naT = naTela(o.forma)
+        const naT = formas.get(o.id) ?? o.forma
         const [cx, cy] = centro(naT)
         const cx100 = caixaDe(naT)
         return (
